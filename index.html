@@ -463,9 +463,10 @@ td.mono,td .mono{white-space:nowrap}
    Billing Desk — frontend-only preview. All data is sample data
    held in memory; nothing is sent anywhere.
    ============================================================ */
-const COMPANY={name:"Sample Medical Imaging Supplies",address:"Plot 12, Industrial Estate, Hyderabad 500032",gstin:"36AABCS1234D1Z5",state:"Telangana",stateCode:"36",upi:"samplebilling@upi",bank:"Sample Bank · A/c 000123456789 · IFSC SMPL0000123"};
+const COMPANY={pan:"AABCS1234D",email:"accounts@sample-imaging.example",phone:"040 2345 6789",bankName:"Sample Bank",acct:"000123456789",ifsc:"SMPL0000123",name:"Sample Medical Imaging Supplies",address:"Plot 12, Industrial Estate, Hyderabad 500032",gstin:"36AABCS1234D1Z5",state:"Telangana",stateCode:"36",upi:"samplebilling@upi",bank:"Sample Bank · A/c 000123456789 · IFSC SMPL0000123"};
 /* Each location is registered for GST separately (decided 15 Oct) */
 const LOCS={Hyderabad:{state:"Telangana",stateCode:"36",gstin:"36AABCS1234D1Z5",address:"Plot 12, Industrial Estate, Hyderabad 500032"},Vijayawada:{state:"Andhra Pradesh",stateCode:"37",gstin:"37AABCS1234D1Z3",address:"D.No. 40-1-52, MG Road, Vijayawada 520010"},Bengaluru:{state:"Karnataka",stateCode:"29",gstin:"29AABCS1234D1Z1",address:"No. 18, Peenya Industrial Area, Bengaluru 560058"}};
+Object.values(LOCS).forEach(l=>{l.status="Active";l.phone=l.phone||""});
 const locOf=n=>LOCS[n]||LOCS.Hyderabad;
 const STATES=[["Telangana","36"],["Andhra Pradesh","37"],["Karnataka","29"],["Tamil Nadu","33"],["Maharashtra","27"],["Kerala","32"]];
 const LOCATIONS=["Hyderabad","Vijayawada","Bengaluru"];
@@ -485,8 +486,8 @@ const S={
   session:null,
   ui:{route:"dashboard",editor:null,report:"sales",filters:{},sideOpen:false,repOpen:true,sideMini:(()=>{try{return localStorage.getItem("bd.sideMini")==="1"}catch(e){return false}})()},
   suppliers:[
-    {id:"s1",code:"SP-0001",ob:0,name:"Precision Imaging Parts Pvt Ltd",gstin:"27AAFCP4567K1Z2",state:"Maharashtra",stateCode:"27",mobile:"9820011122",email:"accounts@precision-parts.example"},
-    {id:"s2",code:"SP-0002",ob:12000,name:"Deccan Medtech Traders",gstin:"36AAKFD8899L1Z9",state:"Telangana",stateCode:"36",mobile:"9849033344",email:"sales@deccanmedtech.example"}
+    {id:"s1",code:"SP-0001",ob:0,name:"Precision Imaging Parts Pvt Ltd",gstin:"27AAFCP4567K1Z2",state:"Maharashtra",stateCode:"27",mobile:"9820011122",email:"accounts@precision-parts.example",contact:"Anil Shah",address:"Unit 7, MIDC Andheri East, Mumbai",zip:"400093",bankName:"HDFC Bank",acct:"50200011223344",ifsc:"HDFC0000123",status:"Active"},
+    {id:"s2",code:"SP-0002",ob:12000,name:"Deccan Medtech Traders",gstin:"36AAKFD8899L1Z9",state:"Telangana",stateCode:"36",mobile:"9849033344",email:"sales@deccanmedtech.example",contact:"Ravi Kumar",address:"5-9-22, Abids, Hyderabad",zip:"500001",bankName:"SBI",acct:"30112233445",ifsc:"SBIN0000847",status:"Active"}
   ],
   products:[
     {id:"p1",partNo:"CT-FAN-2210",altNo:"ALT-77310",base:"",desc:"CT tube cooling fan assembly",type:"Spare Part",hsn:"90229090",gst:18,rate:18500,unit:"Nos",modality:"CT",equipment:"64-slice CT gantry",location:"Hyderabad",supplierId:"s1",stock:{Hyderabad:6,Vijayawada:2,Bengaluru:0},avgRate:14200,minStock:3,status:"Active"},
@@ -633,7 +634,7 @@ const ICONS={
   alert:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/>',
   edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
-  chevL:'<path d="M15 5l-7 7 7 7"/>',chevD:'<path d="M6 9l6 6 6-6"/>',
+  chevL:'<path d="M15 5l-7 7 7 7"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',factory:'<path d="M3 21V10l6 3V10l6 3V6l6-3v18z"/><path d="M7 17h2M12 17h2M17 17h2"/>',chevD:'<path d="M6 9l6 6 6-6"/>',
   cash:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>'
 };
 const ic=(n,cls="")=>`<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||""}</svg>`;
@@ -672,10 +673,11 @@ function clientDue(c,upto="9999"){const inv=S.invoices.filter(i=>i.clientId===c.
 /* ---------- Routing ---------- */
 const NAV=[
   ["Overview",[["dashboard","Dashboard","home"]]],
-  ["Masters",[["products","Product Master","box"],["clients","Client Master","users"]]],
+  ["Masters",[["products","Product Master","box"],["clients","Client Master","users"],["suppliers","Supplier Master","factory"]]],
   ["Billing",[["quotations","Quotations","quote"],["invoices","Sale Invoice","invoice"],["purchases","Purchase","truck"],["declarations","Declaration","swap"]]],
   ["Cash Transfer",[["payments","Payments","out"],["receipts","Receipts","in"]]],
-  ["Insights",[["reports","Reports","chart"],["messages","Messaging","msg"],["audit","Audit Log","shield"]]]
+  ["Insights",[["reports","Reports","chart"],["messages","Messaging","msg"],["audit","Audit Log","shield"]]],
+  ["Admin",[["settings","Company Settings","gear"]]]
 ];
 const TITLES=Object.fromEntries(NAV.flatMap(g=>g[1]).map(x=>[x[0],x[1]]));
 function go(route){S.ui.anim=true;S.ui.route=route;S.ui.editor=null;S.ui.sideOpen=false;try{history.replaceState(null,"","#"+route)}catch(e){}render();window.scrollTo(0,0)}
@@ -689,7 +691,7 @@ function render(){
   root.innerHTML=`<div class="app ${S.ui.sideMini&&innerWidth>960?"mini":""}">
     <aside class="side ${S.ui.sideOpen?"open":""}" aria-label="Modules">
       <div class="brand"><div class="logo">₹B</div><span class="brand-t">Billing Desk</span><button class="icon-btn side-toggle" data-act="toggleMini" aria-label="${S.ui.sideMini?"Expand":"Collapse"} sidebar" title="${S.ui.sideMini?"Expand":"Collapse"} sidebar">${ic("chevL")}</button></div>
-      <nav class="nav">${NAV.map(([g,items])=>`<div class="nav-group">${g}</div>`+items.map(([k,l,i])=>k==="reports"?`<div class="nav-row"><a href="#${k}" data-act="nav" data-route="${k}" class="${r===k?"on":""}" title="${l}">${ic(i)}<span class="nl">${l}</span></a><button class="icon-btn nav-caret ${S.ui.repOpen?"open":""}" data-act="toggleRep" aria-expanded="${S.ui.repOpen}" aria-label="${S.ui.repOpen?"Hide":"Show"} report list">${ic("chevD")}</button></div>${S.ui.repOpen?`<div class="nav-sub">${REPORTS.map(([id,n])=>`<a href="#reports" class="sub ${r==="reports"&&S.ui.report===id?"on":""}" data-act="navReport" data-id="${id}">${n}</a>`).join("")}</div>`:""}`
+      <nav class="nav">${NAV.filter(([g])=>g!=="Admin"||isAdmin()).map(([g,items])=>`<div class="nav-group">${g}</div>`+items.map(([k,l,i])=>k==="reports"?`<div class="nav-row"><a href="#${k}" data-act="nav" data-route="${k}" class="${r===k?"on":""}" title="${l}">${ic(i)}<span class="nl">${l}</span></a><button class="icon-btn nav-caret ${S.ui.repOpen?"open":""}" data-act="toggleRep" aria-expanded="${S.ui.repOpen}" aria-label="${S.ui.repOpen?"Hide":"Show"} report list">${ic("chevD")}</button></div>${S.ui.repOpen?`<div class="nav-sub">${REPORTS.map(([id,n])=>`<a href="#reports" class="sub ${r==="reports"&&S.ui.report===id?"on":""}" data-act="navReport" data-id="${id}">${n}</a>`).join("")}</div>`:""}`
     :`<a href="#${k}" data-act="nav" data-route="${k}" class="${r===k?"on":""}" title="${l}">${ic(i)}<span class="nl">${l}</span>${counts[k]?`<span class="count crit">${counts[k]}</span>`:""}</a>`).join("")).join("")}</nav>
       <div class="side-foot"><div class="user" title="${esc(S.session.designation)} · ${esc(S.session.location)}"><div class="avatar">${esc(S.session.designation.slice(0,2).toUpperCase())}</div><div style="min-width:0"><b>${esc(S.session.designation)}</b>${esc(S.session.location)} · ${esc(S.session.fy)}</div><button class="icon-btn" data-act="logout" aria-label="Log out" title="Log out">${ic("logout")}</button></div><div class="foot-note">Preview with sample data. Nothing is saved or sent.</div></div>
     </aside>
@@ -707,7 +709,7 @@ function render(){
           <button class="icon-btn" data-act="theme" aria-label="Switch light or dark">${ic(isDark()?"sun":"moon")}</button>
         </div>
       </header>
-      <main class="content ${S.ui.anim?"enter":""}" id="content">${S.session.readOnly?`<div class="callout">${ic("alert")}<span>Financial year ${esc(S.session.fy)} is closed. Screens are read-only.</span></div>`:""}${ed?editorView(ed):(VIEWS[r]||VIEWS.dashboard)()}</main>
+      <main class="content ${S.ui.anim?"enter":""}" id="content">${S.session.readOnly?`<div class="callout">${ic("alert")}<span>Financial year ${esc(S.session.fy)} is closed. Screens are read-only.</span></div>`:""}${ed?editorView(ed):(r==="settings"&&!isAdmin()?VIEWS.dashboard:VIEWS[r]||VIEWS.dashboard)()}</main>
     </div></div>`;
   S.ui.anim=false;$("#tip").hidden=true;afterRender();
 }
@@ -735,7 +737,7 @@ function loginView(){
       <form class="login-form" id="loginForm" novalidate>
         <div><h2>Log in</h2></div>
         <p class="sub">Choose where you're working and for which year.</p>
-        <div class="field"><label for="lgLoc">Location <span class="req">*</span></label><select id="lgLoc" class="input">${LOCATIONS.map(l=>`<option>${l}</option>`).join("")}</select></div>
+        <div class="field"><label for="lgLoc">Location <span class="req">*</span></label><select id="lgLoc" class="input">${LOCATIONS.filter(l=>LOCS[l].status!=="Inactive").map(l=>`<option>${l}</option>`).join("")}</select></div>
         <div class="field"><label for="lgDes">Designation <span class="req">*</span></label><select id="lgDes" class="input"><option value="">Select designation</option>${DESIGNATIONS.map(l=>`<option>${l}</option>`).join("")}</select><span class="err-msg" id="errDes" hidden>Select your designation.</span></div>
         <div class="field"><label for="lgPw">Password <span class="req">*</span></label><div class="pw-wrap"><input id="lgPw" type="password" class="input" autocomplete="current-password" placeholder="Enter password"><button type="button" class="icon-btn" id="pwToggle" aria-label="Show password">${ic("eye")}</button></div><span class="err-msg" id="errPw" hidden>Enter the password.</span></div>
         <div class="field"><label for="lgFy">Financial Year <span class="req">*</span></label><select id="lgFy" class="input">${FYS.map((f,i)=>`<option value="${f}">${f}${i?" (closed)":""}</option>`).join("")}</select></div>
@@ -868,7 +870,7 @@ function productDrawer(id,opts={}){
       <div class="grid g2">
         <div class="field span2"><label for="pfDesc">Part description <span class="req">*</span></label><input id="pfDesc" class="input" value="${esc(p.desc)}"></div>
         <div class="field"><label for="pfType">Part type <span class="req">*</span></label><select id="pfType" class="input">${PART_TYPES.map(x=>`<option ${p.type===x?"selected":""}>${x}</option>`).join("")}</select></div>
-        <div class="field"><label for="pfSup">Supplier</label><select id="pfSup" class="input"><option value="">Select supplier</option>${S.suppliers.map(s=>`<option value="${s.id}" ${p.supplierId===s.id?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div>
+        <div class="field"><label for="pfSup">Supplier</label><select id="pfSup" class="input"><option value="">Select supplier</option>${S.suppliers.filter(s=>(s.status||"Active")==="Active"||s.id===p.supplierId).map(s=>`<option value="${s.id}" ${p.supplierId===s.id?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div>
         <div class="field"><label for="pfHsn">HSN code <span class="req">*</span></label><input id="pfHsn" class="input mono" value="${esc(p.hsn)}" inputmode="numeric" placeholder="4, 6 or 8 digits"></div>
         <div class="field"><label for="pfGst">GST (%) <span class="req">*</span></label><select id="pfGst" class="input">${GST_RATES.map(x=>`<option value="${x}" ${+p.gst===x?"selected":""}>${x}%</option>`).join("")}</select></div>
         <div class="field"><label for="pfRate">Rate (without GST) <span class="req">*</span></label><input id="pfRate" class="input mono" value="${esc(p.rate)}" inputmode="decimal" placeholder="0.00"></div>
@@ -975,6 +977,131 @@ function saveClient(id){
   Object.assign(c,{name:v("#cfName"),category:v("#cfCat"),gstin:gst,state:st[0],stateCode:st[1],location:v("#cfLoc"),mobile:v("#cfMob"),landline:v("#cfLand"),email:v("#cfMail"),billing:v("#cfBill"),zip:v("#cfZip"),fe:v("#cfFe"),ob:+v("#cfOb")||0,obDate:v("#cfObd"),prefs:[...document.querySelectorAll(".cfPref:checked")].map(x=>x.value)});
   if(id){const o=client(id);["name","gstin","mobile","billing","ob"].forEach(k=>{if(String(o[k])!==String(c[k]))audit("Client Master","Edit",o.code,k,o[k],c[k])});Object.assign(o,c);toast("Client saved")}
   else{c.id=nid("c");S.clients.push(c);audit("Client Master","Create",c.code,"","",c.name);toast(`${c.name} registered`)}
+  closeOverlay();render();
+}
+
+/* ---------- Supplier Master ---------- */
+VIEWS.suppliers=()=>{
+  const f=S.ui.filters.suppliers||(S.ui.filters.suppliers={q:"",status:"Active"});const q=f.q.toLowerCase();
+  const rows=S.suppliers.filter(x=>(!q||[x.name,x.code,x.gstin,x.mobile,x.contact].join(" ").toLowerCase().includes(q))&&(!f.status||(x.status||"Active")===f.status));
+  const act=S.suppliers.filter(x=>(x.status||"Active")==="Active");
+  return `<div class="page-head"><div><h1>Supplier Master</h1><p>Companies you buy from. Picked on purchases and supplier payments.</p></div>
+    <div class="actions"><button class="btn primary" data-act="openSupplier">${ic("plus")}Add supplier</button></div></div>
+  ${statStrip([["Active suppliers",act.length,S.suppliers.length-act.length+" inactive"],["Other states",act.filter(x=>x.stateCode!==locOf(S.session.location).stateCode).length,"Purchases carry IGST"],["Total you owe",money0(S.suppliers.reduce((a,x)=>a+Math.max(0,supplierDue(x)),0)),"Across all suppliers"]])}
+  <div class="panel"><div class="toolbar">
+    <div class="field grow"><label for="fsQ">Search</label><div class="search">${ic("search")}<input id="fsQ" class="input" data-filter="suppliers.q" value="${esc(f.q)}" placeholder="Name, code, GSTIN, mobile or contact"></div></div>
+    <div class="field"><label for="fsS">Status</label><select id="fsS" class="input" data-filter="suppliers.status"><option value="">All</option><option ${f.status==="Active"?"selected":""}>Active</option><option ${f.status==="Inactive"?"selected":""}>Inactive</option></select></div>
+  </div>
+  <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Code</th><th>Name</th><th>GSTIN</th><th>State</th><th>Contact person</th><th>Mobile</th><th>E-mail</th></tr></thead><tbody>
+  ${rows.map((x,i)=>`<tr class="click ${(x.status||"Active")==="Inactive"?"muted":""}" data-act="openSupplier" data-id="${x.id}"><td class="mono">${i+1}</td><td class="mono">${x.code}</td><td>${partyCell(x.name,x.address?x.address.split(",").pop().trim():"")}</td><td class="mono">${esc(x.gstin)||'<span class="sub-line">Unregistered</span>'}</td><td>${esc(x.state)} <span class="sub-line mono">${x.stateCode}</span></td><td>${esc(x.contact||"—")}</td><td class="mono">${esc(x.mobile)}</td><td>${esc(x.email||"—")}</td></tr>`).join("")}
+  </tbody></table>${rows.length?"":'<div class="empty"><strong>No suppliers match</strong>Try another search, or add a supplier.</div>'}</div></div>`;
+};
+function supplierDrawer(id){
+  const ex=id?supplier(id):null;
+  const x=ex?{...ex}:{code:"SP-"+String(S.suppliers.length+1).padStart(4,"0"),name:"",gstin:"",state:"Telangana",stateCode:"36",contact:"",mobile:"",email:"",address:"",zip:"",bankName:"",acct:"",ifsc:"",ob:0,status:"Active"};
+  openOverlay(`<div class="drawer" role="dialog" aria-modal="true" aria-labelledby="sdT">
+    <div class="d-head"><div><h2 id="sdT">${ex?"Edit supplier":"Add supplier"}</h2><p class="mono">${esc(x.code)}</p></div><button class="icon-btn" data-act="close" aria-label="Close">${ic("x")}</button></div>
+    <form class="d-body" id="supForm" novalidate>
+      <div class="section-title">Supplier details</div>
+      <div class="grid g2">
+        <div class="field span2"><label for="sfName">Name <span class="req">*</span></label><input id="sfName" class="input" value="${esc(x.name)}"></div>
+        <div class="field"><label for="sfGst">GSTIN</label><input id="sfGst" class="input mono" value="${esc(x.gstin)}" maxlength="15" placeholder="15 characters; blank if unregistered"><span class="hint" id="sGstHint">State fills in from the first two digits.</span></div>
+        <div class="field"><label for="sfState">State <span class="req">*</span></label><select id="sfState" class="input">${STATES.map(([n,cd])=>`<option value="${n}" ${x.state===n?"selected":""}>${n} (${cd})</option>`).join("")}</select></div>
+        <div class="field span2"><label for="sfAddr">Address <span class="req">*</span></label><textarea id="sfAddr" class="input">${esc(x.address)}</textarea></div>
+        <div class="field"><label for="sfZip">Zip code <span class="req">*</span></label><input id="sfZip" class="input mono" value="${esc(x.zip)}" inputmode="numeric" maxlength="6"></div>
+        <div class="field"><label for="sfCon">Contact person</label><input id="sfCon" class="input" value="${esc(x.contact)}"></div>
+        <div class="field"><label for="sfMob">Mobile <span class="req">*</span></label><input id="sfMob" class="input mono" value="${esc(x.mobile)}" inputmode="tel" maxlength="10"></div>
+        <div class="field"><label for="sfMail">E-mail</label><input id="sfMail" class="input" value="${esc(x.email)}"></div>
+      </div>
+      <div class="section-title">Bank details</div>
+      <div class="grid g3">
+        <div class="field"><label for="sfBank">Bank name</label><input id="sfBank" class="input" value="${esc(x.bankName)}"></div>
+        <div class="field"><label for="sfAcct">Account number</label><input id="sfAcct" class="input mono" value="${esc(x.acct)}" inputmode="numeric"></div>
+        <div class="field"><label for="sfIfsc">IFSC</label><input id="sfIfsc" class="input mono" value="${esc(x.ifsc)}" maxlength="11"></div>
+      </div>
+      <div class="section-title">Opening balance</div>
+      <div class="grid g2"><div class="field"><label for="sfOb">OB amount</label><input id="sfOb" class="input mono" value="${esc(x.ob)}" inputmode="decimal"><span class="hint">What you owe this supplier at the start of the year.</span></div></div>
+    </form>
+    <div class="d-foot"><div class="left">${ex?`<button class="btn" data-act="supplierStatus" data-id="${ex.id}">${(ex.status||"Active")==="Active"?"Make inactive":"Make active"}</button>`:""}</div><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="saveSupplier" data-id="${ex?ex.id:""}">Save supplier</button></div></div>`);
+  const g=$("#sfGst");g.addEventListener("input",()=>{g.value=g.value.toUpperCase();const st=STATES.find(t=>t[1]===g.value.slice(0,2));if(st){$("#sfState").value=st[0];$("#sGstHint").textContent=`State set to ${st[0]} from GSTIN.`}});
+  $("#supForm").addEventListener("input",e=>e.target.classList.remove("err"));
+  setTimeout(()=>$("#sfName").focus(),30);
+}
+const GSTIN_RE=/^\d{2}[A-Z]{5}\d{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/;
+function saveSupplier(id){
+  const v=k=>$(k).value.trim();const errs=[];const mark=(sel,ok)=>{$(sel).classList.toggle("err",!ok);if(!ok)errs.push(sel)};
+  const gst=v("#sfGst").toUpperCase();const st=STATES.find(t=>t[0]===v("#sfState"));
+  mark("#sfName",!!v("#sfName"));mark("#sfGst",!gst||(GSTIN_RE.test(gst)&&gst.slice(0,2)===st[1]&&!S.suppliers.some(o=>o.id!==id&&o.gstin===gst)));
+  mark("#sfAddr",!!v("#sfAddr"));mark("#sfZip",/^\d{6}$/.test(v("#sfZip")));mark("#sfMob",/^\d{10}$/.test(v("#sfMob")));
+  mark("#sfIfsc",!v("#sfIfsc")||/^[A-Z]{4}0[A-Z0-9]{6}$/.test(v("#sfIfsc").toUpperCase()));
+  if(errs.length){toast(errs.includes("#sfGst")&&gst?"GSTIN must be 15 characters, match the state, and not belong to another supplier.":"Fix the highlighted fields.");$(errs[0]).focus();return}
+  const data={name:v("#sfName"),gstin:gst,state:st[0],stateCode:st[1],address:v("#sfAddr"),zip:v("#sfZip"),contact:v("#sfCon"),mobile:v("#sfMob"),email:v("#sfMail"),bankName:v("#sfBank"),acct:v("#sfAcct"),ifsc:v("#sfIfsc").toUpperCase(),ob:+v("#sfOb")||0};
+  if(id){const o=supplier(id);["name","gstin","mobile","address","acct","ob"].forEach(k=>{if(String(o[k]??"")!==String(data[k]))audit("Supplier Master","Edit",o.code,k,o[k]??"",data[k])});Object.assign(o,data);toast("Supplier saved")}
+  else{const n={id:nid("s"),code:"SP-"+String(S.suppliers.length+1).padStart(4,"0"),status:"Active",...data};S.suppliers.push(n);audit("Supplier Master","Create",n.code,"","",n.name);toast(`${n.name} added`)}
+  closeOverlay();render();
+}
+
+/* ---------- Company Settings (Admin only) ---------- */
+VIEWS.settings=()=>{
+  const c=COMPANY;const locs=Object.entries(LOCS);
+  return `<div class="page-head"><div><h1>Company Settings</h1><p>Company details and branches. Only Admin can see or change this page. Changes are recorded in the audit log.</p></div></div>
+  <div class="panel"><div class="panel-head"><div><h2>Company details</h2><span class="sub-line">Printed on invoices, quotations and statements.</span></div></div>
+    <form class="panel-body" id="coForm" novalidate style="display:flex;flex-direction:column;gap:14px">
+      <div class="grid g3">
+        <div class="field span2"><label for="coName">Company name <span class="req">*</span></label><input id="coName" class="input" value="${esc(c.name)}"></div>
+        <div class="field"><label for="coPan">PAN <span class="req">*</span></label><input id="coPan" class="input mono" value="${esc(c.pan)}" maxlength="10"></div>
+        <div class="field"><label for="coMail">E-mail</label><input id="coMail" class="input" value="${esc(c.email)}"></div>
+        <div class="field"><label for="coPhone">Phone</label><input id="coPhone" class="input mono" value="${esc(c.phone)}"></div>
+        <div class="field"><label for="coUpi">UPI ID <span class="req">*</span></label><input id="coUpi" class="input mono" value="${esc(c.upi)}"><span class="hint">Used for the payment QR code on invoices.</span></div>
+        <div class="field"><label for="coBank">Bank name</label><input id="coBank" class="input" value="${esc(c.bankName)}"></div>
+        <div class="field"><label for="coAcct">Account number</label><input id="coAcct" class="input mono" value="${esc(c.acct)}"></div>
+        <div class="field"><label for="coIfsc">IFSC</label><input id="coIfsc" class="input mono" value="${esc(c.ifsc)}" maxlength="11"></div>
+      </div>
+      <div><button class="btn primary" type="button" data-act="saveCompany">${ic("check")}Save company details</button></div>
+    </form></div>
+  <div class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Branches</h2><span class="sub-line">Each branch is registered for GST on its own. A new branch appears in the login screen, stock, declarations and reports.</span></div><button class="btn primary" data-act="openLocation">${ic("plus")}Add branch</button></div>
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Branch</th><th>State</th><th>GSTIN</th><th>Address</th><th>Phone</th><th>Status</th></tr></thead><tbody>
+    ${locs.map(([n,l],i)=>`<tr class="click ${l.status==="Inactive"?"muted":""}" data-act="openLocation" data-id="${esc(n)}"><td class="mono">${i+1}</td><td><b>${esc(n)}</b>${n===S.session.location?' <span class="chip accent plain">You are here</span>':""}</td><td>${esc(l.state)} <span class="sub-line mono">${l.stateCode}</span></td><td class="mono">${esc(l.gstin)}</td><td>${esc(l.address)}</td><td class="mono">${esc(l.phone||"—")}</td><td>${chipFor(l.status)}</td></tr>`).join("")}
+    </tbody></table></div></div>`;
+};
+function saveCompany(){
+  const v=k=>$(k).value.trim();const errs=[];const mark=(sel,ok)=>{$(sel).classList.toggle("err",!ok);if(!ok)errs.push(sel)};
+  mark("#coName",!!v("#coName"));mark("#coPan",/^[A-Z]{5}\d{4}[A-Z]$/.test(v("#coPan").toUpperCase()));mark("#coUpi",/^[\w.\-]+@[\w]+$/.test(v("#coUpi")));
+  mark("#coIfsc",!v("#coIfsc")||/^[A-Z]{4}0[A-Z0-9]{6}$/.test(v("#coIfsc").toUpperCase()));
+  if(errs.length){toast("Fix the highlighted fields.");$(errs[0]).focus();return}
+  const data={name:v("#coName"),pan:v("#coPan").toUpperCase(),email:v("#coMail"),phone:v("#coPhone"),upi:v("#coUpi"),bankName:v("#coBank"),acct:v("#coAcct"),ifsc:v("#coIfsc").toUpperCase()};
+  Object.keys(data).forEach(k=>{if(String(COMPANY[k])!==String(data[k]))audit("Company Settings","Edit","Company",k,COMPANY[k],data[k])});
+  Object.assign(COMPANY,data);COMPANY.bank=[data.bankName,data.acct&&"A/c "+data.acct,data.ifsc&&"IFSC "+data.ifsc].filter(Boolean).join(" · ");
+  toast("Company details saved");render();
+}
+function locationDrawer(name){
+  const ex=name?LOCS[name]:null;const l=ex?{name,...ex}:{name:"",state:"Tamil Nadu",stateCode:"33",gstin:"",address:"",phone:"",status:"Active"};
+  const pan=COMPANY.pan;
+  openOverlay(`<div class="drawer" role="dialog" aria-modal="true" aria-labelledby="ldT">
+    <div class="d-head"><div><h2 id="ldT">${ex?"Edit branch":"Add branch"}</h2><p>${ex?esc(name):"A new location the business is expanding to"}</p></div><button class="icon-btn" data-act="close" aria-label="Close">${ic("x")}</button></div>
+    <form class="d-body" id="locForm" novalidate>
+      <div class="grid g2">
+        <div class="field span2"><label for="lfName">Branch name <span class="req">*</span></label><input id="lfName" class="input" value="${esc(l.name)}" placeholder="City, e.g. Chennai" ${ex?"readonly":""}>${ex?'<span class="hint">The name can\'t change once documents use it.</span>':""}</div>
+        <div class="field"><label for="lfState">State <span class="req">*</span></label><select id="lfState" class="input">${STATES.map(([n,cd])=>`<option value="${n}" ${l.state===n?"selected":""}>${n} (${cd})</option>`).join("")}</select></div>
+        <div class="field"><label for="lfGst">GSTIN <span class="req">*</span></label><input id="lfGst" class="input mono" value="${esc(l.gstin)}" maxlength="15" placeholder="${(STATES.find(t=>t[0]===l.state)||["","33"])[1]}${pan}1Z…"><span class="hint">Starts with the state code and contains the company PAN ${esc(pan)}.</span></div>
+        <div class="field span2"><label for="lfAddr">Address <span class="req">*</span></label><textarea id="lfAddr" class="input">${esc(l.address)}</textarea></div>
+        <div class="field"><label for="lfPhone">Phone</label><input id="lfPhone" class="input mono" value="${esc(l.phone)}"></div>
+      </div>
+    </form>
+    <div class="d-foot"><div class="left">${ex&&name!==S.session.location?`<button class="btn" data-act="locationStatus" data-id="${esc(name)}">${l.status==="Active"?"Make inactive":"Make active"}</button>`:""}</div><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="saveLocation" data-id="${ex?esc(name):""}">Save branch</button></div></div>`);
+  $("#locForm").addEventListener("input",e=>e.target.classList.remove("err"));
+  setTimeout(()=>$(ex?"#lfAddr":"#lfName").focus(),30);
+}
+function saveLocation(name){
+  const v=k=>$(k).value.trim();const errs=[];const mark=(sel,ok)=>{$(sel).classList.toggle("err",!ok);if(!ok)errs.push(sel)};
+  const nm=name||v("#lfName");const st=STATES.find(t=>t[0]===v("#lfState"));const gst=v("#lfGst").toUpperCase();
+  mark("#lfName",!!nm&&(name||!Object.keys(LOCS).some(k=>k.toLowerCase()===nm.toLowerCase())));
+  mark("#lfGst",GSTIN_RE.test(gst)&&gst.slice(0,2)===st[1]&&gst.slice(2,12)===COMPANY.pan&&!Object.entries(LOCS).some(([k,o])=>k!==name&&o.gstin===gst));
+  mark("#lfAddr",!!v("#lfAddr"));
+  if(errs.length){toast(errs.includes("#lfName")&&nm?"A branch with this name already exists.":errs.includes("#lfGst")?"GSTIN must start with the state code, contain the company PAN, and be unique.":"Fix the highlighted fields.");$(errs[0]).focus();return}
+  const data={state:st[0],stateCode:st[1],gstin:gst,address:v("#lfAddr"),phone:v("#lfPhone")};
+  if(name){const o=LOCS[name];Object.keys(data).forEach(k=>{if(String(o[k])!==String(data[k]))audit("Company Settings","Edit",name,k,o[k],data[k])});Object.assign(o,data);toast(`${name} saved`)}
+  else{LOCS[nm]={...data,status:"Active"};LOCATIONS.push(nm);S.products.forEach(p=>{p.stock[nm]=p.stock[nm]||0});audit("Company Settings","Create",nm,"","",gst);toast(`${nm} added. It appears on the login screen from the next login.`)}
   closeOverlay();render();
 }
 
@@ -1096,7 +1223,7 @@ function purchaseEditor(ed,dis){
   const d=ed.doc,t=purchaseCalc(d),sup=supplier(d.supplierId);const lock=!!dis;
   return `<div class="page-head"><div><button class="back" data-act="closeEditor">${ic("arrow")}${{quote:"Quotations",invoice:"Sale invoices",purchase:"Purchases",declaration:"Declarations"}[ed.kind]}</button><h1>${esc(editorTitle(ed))}</h1><p>${ed.isNew?"Stock is added at "+esc(d.location)+" on the received date.":chipFor(d.status)}</p></div></div>${adminNote(ed)}
   <div class="panel"><div class="card-title"><span class="step">1</span>Details</div><div class="doc-head">
-    <div class="field" style="grid-column:span 2"><label for="puSup">Supplier <span class="req">*</span></label><select id="puSup" class="input" data-doc="supplierId" ${dis}><option value="">Select supplier</option>${S.suppliers.map(s=>`<option value="${s.id}" ${s.id===d.supplierId?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div>
+    <div class="field" style="grid-column:span 2"><label for="puSup">Supplier <span class="req">*</span></label><select id="puSup" class="input" data-doc="supplierId" ${dis}><option value="">Select supplier</option>${S.suppliers.filter(s=>(s.status||"Active")==="Active"||s.id===d.supplierId).map(s=>`<option value="${s.id}" ${s.id===d.supplierId?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div>
     <div class="field"><label for="puNo">Supplier invoice No. <span class="req">*</span></label><input id="puNo" class="input mono" data-doc="supInvNo" value="${esc(d.supInvNo)}" ${dis}></div>
     <div class="field"><label for="puDt">Supplier invoice date <span class="req">*</span></label><input id="puDt" type="date" class="input" data-doc="supInvDate" value="${d.supInvDate}" max="${TODAY}" ${dis}></div>
     ${sup?`<div class="party-card"><b>${esc(sup.name)}</b><span class="mono">GSTIN ${esc(sup.gstin)} · ${esc(sup.state)} (${sup.stateCode})</span><span>${t.intra?"Intra-state: CGST + SGST":"Inter-state: IGST"}</span></div>`:`<div class="party-card"><span>Pick a supplier to fill GSTIN and state.</span></div>`}
@@ -1120,7 +1247,7 @@ function declEditor(ed,dis){
   return `<div class="page-head"><div><button class="back" data-act="closeEditor">${ic("arrow")}${{quote:"Quotations",invoice:"Sale invoices",purchase:"Purchases",declaration:"Declarations"}[ed.kind]}</button><h1>${esc(editorTitle(ed))}</h1><p>Moves stock only. Sales, purchases and dues don't change.</p></div></div>${adminNote(ed)}
   <div class="panel"><div class="card-title"><span class="step">1</span>Details</div><div class="doc-head">
     <div class="field"><label>From location</label><input class="input" readonly value="${esc(d.from)}"></div>
-    <div class="field"><label for="dcTo">To location <span class="req">*</span></label><select id="dcTo" class="input" data-doc="to" ${dis}>${LOCATIONS.filter(l=>l!==d.from).map(l=>`<option ${d.to===l?"selected":""}>${l}</option>`).join("")}</select></div>
+    <div class="field"><label for="dcTo">To location <span class="req">*</span></label><select id="dcTo" class="input" data-doc="to" ${dis}>${LOCATIONS.filter(l=>l!==d.from&&(LOCS[l].status!=="Inactive"||d.to===l)).map(l=>`<option ${d.to===l?"selected":""}>${l}</option>`).join("")}</select></div>
     <div class="field"><label for="dcDt">Date <span class="req">*</span></label><input id="dcDt" type="date" class="input" data-doc="date" value="${d.date}" ${dis}></div>
     <div class="field"><label for="dcPu">Purpose <span class="req">*</span></label><select id="dcPu" class="input" data-doc="purpose" ${dis}>${DECL_PURPOSES.map(x=>`<option ${d.purpose===x?"selected":""}>${x}</option>`).join("")}</select></div>
     <div class="field" style="grid-column:span 2"><label for="dcCo">Consignee (client site, optional)</label><select id="dcCo" class="input" data-doc="consignee" ${dis}><option value="">None</option>${S.clients.filter(c=>c.status==="Active").map(c=>`<option value="${c.id}" ${d.consignee===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
@@ -1450,6 +1577,7 @@ function palItems(q){
   if(q){
     S.invoices.forEach(d=>{if(has(d.no,client(d.clientId).name))out.push({g:"Invoices",l:d.no,i:"invoice",s:client(d.clientId).name+" · "+money(calc(d).grand),run:()=>{S.ui.route="invoices";openEditor("invoice",d.id)}})});
     S.quotations.forEach(d=>{if(has(d.no,client(d.clientId).name))out.push({g:"Quotations",l:d.no,i:"quote",s:client(d.clientId).name,run:()=>{S.ui.route="quotations";openEditor("quote",d.id)}})});
+    S.suppliers.forEach(x=>{if(has(x.name,x.code,x.gstin,x.mobile))out.push({g:"Suppliers",l:x.name,i:"factory",s:x.code+" · "+x.state,run:()=>{go("suppliers");supplierDrawer(x.id)}})});
     S.clients.forEach(c=>{if(has(c.name,c.code,c.gstin,c.mobile))out.push({g:"Clients",l:c.name,i:"users",s:c.code+" · due "+money0(clientDue(c)),run:()=>{go("clients");clientDrawer(c.id)}})});
     S.products.forEach(p=>{if(has(p.partNo,p.altNo,p.desc))out.push({g:"Products",l:p.desc,i:"box",s:p.partNo+" · "+stockTotal(p)+" in stock",run:()=>{go("products");productDrawer(p.id)}})});
   }
@@ -1524,6 +1652,10 @@ const A={
   productStatus:el=>{const p=prod(el.dataset.id);audit("Product Master","Status change",p.partNo,"Status",p.status,el.dataset.to);p.status=el.dataset.to;closeOverlay();render();toast(`${p.partNo} is now ${p.status.toLowerCase()}`)},
   openClient:(el,e)=>{if(e.target.closest("[data-stop]"))return;clientDrawer(el.dataset.id)},
   saveClient:el=>saveClient(el.dataset.id),
+  openSupplier:el=>supplierDrawer(el.dataset.id),saveSupplier:el=>saveSupplier(el.dataset.id),
+  supplierStatus:el=>{const o=supplier(el.dataset.id);const nu=(o.status||"Active")==="Active"?"Inactive":"Active";audit("Supplier Master","Status",o.code,"status",o.status||"Active",nu);o.status=nu;closeOverlay();render();toast(`${o.name} is now ${nu.toLowerCase()}`)},
+  saveCompany:()=>saveCompany(),openLocation:el=>locationDrawer(el.dataset.id),saveLocation:el=>saveLocation(el.dataset.id),
+  locationStatus:el=>{const n=el.dataset.id,o=LOCS[n];const nu=o.status==="Active"?"Inactive":"Active";audit("Company Settings","Status",n,"status",o.status,nu);o.status=nu;closeOverlay();render();toast(`${n} is now ${nu.toLowerCase()}`)},
   clientStatus:el=>{const c=client(el.dataset.id);const to=c.status==="Active"?"Inactive":"Active";audit("Client Master","Status change",c.code,"Status",c.status,to);c.status=to;closeOverlay();render();toast(`${c.name} is now ${to.toLowerCase()}`)},
   addrAdd:()=>{readAddr();const c=S.ui.draftClient;c.addresses.push({id:nid("a"),label:"",address:"",zip:"",def:false,status:"Active"});$("#addrList").innerHTML=S.ui.addrHtml();const last=c.addresses[c.addresses.length-1];$("#al_"+last.id).focus()},
   addrRemove:el=>{readAddr();const c=S.ui.draftClient;const a=c.addresses.find(x=>x.id===el.dataset.id);const used=S.invoices.some(i=>i.addrId===a.id);if(used){a.status="Inactive";toast("Address is used on invoices, so it was made inactive.")}else c.addresses=c.addresses.filter(x=>x.id!==a.id);if(!c.addresses.some(x=>x.def&&x.status==="Active"))c.addresses.find(x=>x.status==="Active").def=true;$("#addrList").innerHTML=S.ui.addrHtml()},
