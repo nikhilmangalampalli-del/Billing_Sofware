@@ -525,7 +525,7 @@ S.invoices=[
   {id:"i3",no:"INV/26-27/0003",date:"2026-09-18",type:"Credit",clientId:"c1",addrId:"a1",lines:[L("p3",1,42000,2000,"₹"),L("p5",2,2800)],billDisc:0,billDt:"%",transport:500,fe:"R. Prasad",po:"CDC/PO/118",remarks:"",status:"Saved",dueDate:"2026-10-18",upiRef:""},
   {id:"i4",no:"INV/26-27/0004",date:"2026-09-26",type:"UPI",clientId:"c1",addrId:"a2",lines:[L("p6",6,650)],billDisc:0,billDt:"%",transport:0,fe:"R. Prasad",po:"",remarks:"",status:"Saved",dueDate:"",upiRef:"UPI 428811902231"},
   {id:"i5",no:"INV/26-27/0005",date:"2026-10-02",type:"Credit",clientId:"c1",addrId:"a2",lines:[L("p4",10,1250),L("p6",20,650)],billDisc:2,billDt:"%",transport:0,fe:"R. Prasad",po:"",remarks:"Against QT/26-27/0002",status:"Saved",dueDate:"2026-11-01",upiRef:"",quoteNo:"QT/26-27/0002"},
-  {id:"i6",no:"INV/26-27/0006",date:"2026-10-07",type:"Credit",clientId:"c4",addrId:"a5",lines:[L("p1",1,18500),L("p4",6,1250)],billDisc:0,billDt:"%",transport:1800,fe:"M. Rao",po:"GVH/STR/905",remarks:"",status:"Saved",dueDate:"2026-11-06",upiRef:""}
+  {id:"i6",no:"INV/26-27/0006",date:"2026-10-07",type:"Credit",clientId:"c4",addrId:"a5",lines:[L("p1",1,18500),L("p4",6,1250)],billDisc:0,billDt:"%",transport:1800,trBy:"client",fe:"M. Rao",po:"GVH/STR/905",remarks:"",status:"Saved",dueDate:"2026-11-06",upiRef:""}
 ];
 S.purchases=[
   {id:"pu1",no:"PUR/26-27/0001",supplierId:"s1",supInvNo:"PIP/2026/3381",supInvDate:"2026-08-02",date:"2026-08-04",location:"Hyderabad",lines:[{pid:"p1",qty:4,rate:14200,gst:18},{pid:"p3",qty:2,rate:33800,gst:12}],additions:[{label:"Freight",amt:2400}],status:"Saved"},
@@ -650,13 +650,15 @@ function calc(doc){
   let billDisc=doc.billDt==="%"?pre*(+doc.billDisc||0)/100:(+doc.billDisc||0);billDisc=Math.min(r2(billDisc),pre);
   let gst=0;rows.forEach(r=>{const share=pre?r.taxable/pre*billDisc:0;r.net=r2(r.taxable-share);r.gst=r2(r.net*r.gstRate/100);r.amount=r2(r.net+r.gst);gst+=r.gst});
   const taxable=r2(pre-billDisc);const transport=r2(+doc.transport||0);
-  /* Transport is taxable: shared across lines by taxable value, each share taxed at that line's GST rate */
-  let trLeft=transport,trGst=0;const taxed=rows.filter(r=>r.net>0);taxed.forEach((r,i)=>{r.tr=i===taxed.length-1?r2(trLeft):r2(r.net/taxable*transport);trLeft=r2(trLeft-r.tr);r.trGst=r2(r.tr*r.gstRate/100);trGst+=r.trGst});
-  rows.forEach(r=>{r.tr=r.tr||0;r.trGst=r.trGst||0});trGst=r2(trGst);gst=r2(gst+trGst);
+  /* Transport we arrange is part of the sale: taxed at the highest GST rate on the document.
+     When the client arranges the transport, the charge is passed on without GST. */
+  const trNoGst=doc.trBy==="client";const trRate=trNoGst||!rows.length?0:Math.max(...rows.map(r=>r.gstRate));
+  rows.forEach(r=>{r.tr=0;r.trGst=0});const trRow=trNoGst?null:rows.find(r=>r.gstRate===trRate);
+  let trGst=0;if(transport&&trRow){trRow.tr=transport;trGst=trRow.trGst=r2(transport*trRate/100)}gst=r2(gst+trGst);
   const cgst=intra?r2(gst/2):0,sgst=intra?r2(gst-r2(gst/2)):0,igst=intra?0:gst;
   const raw=r2(taxable+gst+transport);const grand=Math.round(raw);const round=r2(grand-raw);
   const hsn={};rows.forEach(r=>{const k=(r.p?.hsn||"-")+"|"+r.gstRate;hsn[k]=hsn[k]||{hsn:r.p?.hsn||"-",rate:r.gstRate,taxable:0,gst:0};hsn[k].taxable+=r.net+r.tr;hsn[k].gst+=r.gst+r.trGst});
-  return{rows,loc:lo,basic,itemDisc,billDisc,taxable,gst,cgst,sgst,igst,transport,trGst,round,grand,intra,hsn:Object.values(hsn)};
+  return{rows,loc:lo,basic,itemDisc,billDisc,taxable,gst,cgst,sgst,igst,transport,trGst,trRate,trNoGst,round,grand,intra,hsn:Object.values(hsn)};
 }
 function purchaseCalc(pu){const sub=pu.lines.reduce((a,l)=>a+(+l.qty||0)*(+l.rate||0),0);const gst=pu.lines.reduce((a,l)=>a+(+l.qty||0)*(+l.rate||0)*(+l.gst||0)/100,0);const add=(pu.additions||[]).reduce((a,x)=>a+(+x.amt||0),0);const sup=supplier(pu.supplierId);const intra=!sup||sup.stateCode===locOf(pu.location).stateCode;const t=split(r2(gst),intra);return{sub:r2(sub),gst:r2(gst),cgst:t.c,sgst:t.s,igst:t.i,add:r2(add),total:Math.round(sub+gst+add),intra}}
 const supPaid=(s,from="0000",upto="9999")=>r2(S.payments.filter(p=>p.payType==="Supplier"&&p.paidTo===s.name&&p.status!=="Cancelled"&&p.date>=from&&p.date<=upto).reduce((a,p)=>a+p.amount,0));
@@ -1019,7 +1021,7 @@ function newDoc(kind,from){
   const c=S.clients.find(x=>x.status==="Active");
   if(kind==="quote")return{kind,isNew:true,doc:{id:nid("q"),no:"",loc:S.session.location,date:TODAY,validTill:addDays(TODAY,30),clientId:"",addrId:"",lines:[],billDisc:0,billDt:"%",transport:0,fe:"",ref:"",remarks:"",status:"Draft",rev:0,invoiceNo:""}};
   if(kind==="invoice"){const d={id:nid("i"),no:"",loc:S.session.location,date:TODAY,type:"Credit",clientId:"",addrId:"",lines:[],billDisc:0,billDt:"%",transport:0,fe:"",po:"",remarks:"",status:"Draft",dueDate:addDays(TODAY,30),upiRef:""};
-    if(from){Object.assign(d,{clientId:from.clientId,addrId:from.addrId,lines:from.lines.map(l=>({...l})),billDisc:from.billDisc,billDt:from.billDt,transport:from.transport,fe:from.fe,po:from.ref,quoteNo:from.no,quoteId:from.id,remarks:"Against "+from.no})}
+    if(from){Object.assign(d,{clientId:from.clientId,addrId:from.addrId,lines:from.lines.map(l=>({...l})),billDisc:from.billDisc,billDt:from.billDt,transport:from.transport,trBy:from.trBy,fe:from.fe,po:from.ref,quoteNo:from.no,quoteId:from.id,remarks:"Against "+from.no})}
     return{kind,isNew:true,doc:d}}
   if(kind==="purchase")return{kind,isNew:true,doc:{id:nid("pu"),no:"",supplierId:"",supInvNo:"",supInvDate:TODAY,date:TODAY,location:S.session.location,lines:[],additions:[],status:"Draft",supTotal:""}};
   if(kind==="declaration")return{kind,isNew:true,doc:{id:nid("d"),no:"",date:TODAY,from:S.session.location,to:LOCATIONS.find(l=>l!==S.session.location),purpose:"Branch transfer",consignee:"",fe:"",transport:"",lines:[],remarks:"",status:"Draft"}};
@@ -1058,6 +1060,7 @@ function editorView(ed){
   const foot=`<div class="grid g2" style="padding:2px 16px 16px;align-content:start">
       <div class="field"><label for="edBd">Bill discount</label><div class="disc-wrap"><input id="edBd" class="input num" data-doc="billDisc" value="${d.billDisc||0}" inputmode="decimal" ${dis}><select class="input" data-doc="billDt" aria-label="Bill discount type" ${dis}><option ${d.billDt==="%"?"selected":""}>%</option><option ${d.billDt==="₹"?"selected":""}>₹</option></select></div><span class="hint">Applied after item discounts, spread across lines.</span></div>
       <div class="field"><label for="edTr">Transport charges</label><input id="edTr" class="input num" data-doc="transport" value="${d.transport||0}" inputmode="decimal" ${dis}></div>
+      <div class="field"><label for="edTrBy">Transport arranged by</label><select id="edTrBy" class="input" data-doc="trBy" ${dis}><option value="us" ${d.trBy!=="client"?"selected":""}>Us (add GST)</option><option value="client" ${d.trBy==="client"?"selected":""}>Client's own transport (no GST)</option></select><span class="hint">${d.trBy==="client"?"Charge is passed on without GST.":"GST is charged at the highest item rate on this bill."}</span></div>
       <div class="field span2"><label for="edRem">Remarks</label><textarea id="edRem" class="input" data-doc="remarks" ${dis}>${esc(d.remarks)}</textarea></div>
     </div>`;
   const summary=`<div class="tax-note">${c?(t.intra?`Intra-state supply within ${esc(c.state)}, billed from ${esc(d.loc||"Hyderabad")}: GST is split into CGST and SGST.`:`Inter-state supply from ${esc(t.loc.state)} to ${esc(c.state)}: IGST applies.`):"Tax split appears once a client is picked."}</div>
@@ -1082,7 +1085,7 @@ function totalsHtml(t){return `<div class="row"><span>Sub total</span><span>${mo
   ${t.itemDisc?`<div class="row minus"><span>Item discounts</span><span>−${money(t.itemDisc)}</span></div>`:""}
   ${t.billDisc?`<div class="row minus"><span>Bill discount</span><span>−${money(t.billDisc)}</span></div>`:""}
   <div class="row"><span>Taxable value</span><span>${money(t.taxable)}</span></div>
-  ${t.transport?`<div class="row"><span>Transport (taxable)</span><span>${money(t.transport)}</span></div>`:""}
+  ${t.transport?`<div class="row"><span>${t.trNoGst?"Transport (no GST, client's transport)":`Transport (GST ${t.trRate}%)`}</span><span>${money(t.transport)}</span></div>`:""}
   <div class="row"><span>CGST</span><span>${money(t.cgst)}</span></div><div class="row"><span>SGST</span><span>${money(t.sgst)}</span></div><div class="row"><span>IGST</span><span>${money(t.igst)}</span></div>
   ${t.round?`<div class="row"><span>Round-off</span><span>${t.round>0?"+":"−"}${money(Math.abs(t.round))}</span></div>`:""}
   <div class="row grand"><span>Grand total</span><span>${money(t.grand)}</span></div>
@@ -1210,7 +1213,7 @@ function previewInvoice(d,kind="invoice"){
       <div class="s-box"><div class="s-label">Ship to · ${esc(a?.label||"")}</div><div>${esc(a?.address||"")} ${esc(a?.zip||"")}</div><div>Place of supply: ${esc(c.state)} (${c.stateCode})</div>${d.fe?`<div>Representative: ${esc(d.fe)}</div>`:""}</div></div>
     <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Description</th><th>HSN</th><th>Batch / Expiry</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Disc.</th><th class="num">Taxable</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Amount</th></tr></thead><tbody>
     ${t.rows.map((r,i)=>{const tx=split(r.gst,t.intra);return `<tr><td>${i+1}</td><td>${esc(r.p.desc)}<div style="color:#777;font-size:10.5px" class="mono">${esc(r.p.partNo)}</div></td><td class="mono">${r.p.hsn}</td><td>${esc(r.l.batch||"—")}${r.l.exp?`<div style="font-size:10.5px">Exp. ${dfmt(r.l.exp)}</div>`:""}</td><td class="num">${r.l.qty} ${r.p.unit}</td><td class="num">${money(r.l.rate)}</td><td class="num">${r.disc?money(r.disc):"—"}</td><td class="num">${money(r.net)}</td><td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td><td class="num">${money(r.amount)}</td></tr>`}).join("")}
-    ${t.transport?(tx=>`<tr><td></td><td>Transport charges<div style="color:#777;font-size:10.5px">Taxed at each item's GST rate</div></td><td></td><td></td><td></td><td></td><td></td><td class="num">${money(t.transport)}</td><td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td><td class="num">${money(t.transport+t.trGst)}</td></tr>`)(split(t.trGst,t.intra)):""}
+    ${t.transport?(tx=>`<tr><td></td><td>Transport charges<div style="color:#777;font-size:10.5px">${t.trNoGst?"Client's own transport, no GST":`GST ${t.trRate}% (highest rate)`}</div></td><td></td><td></td><td></td><td></td><td></td><td class="num">${money(t.transport)}</td><td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td><td class="num">${money(t.transport+t.trGst)}</td></tr>`)(split(t.trGst,t.intra)):""}
     </tbody></table></div>
     <div class="s-bottom"><div style="display:flex;flex-direction:column;gap:10px">
       <div style="overflow-x:auto"><table><thead><tr><th>HSN</th><th class="num">Taxable</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th></tr></thead><tbody>${t.hsn.map(h=>{const tx=split(r2(h.gst),t.intra);return `<tr><td class="mono">${h.hsn}</td><td class="num">${money(h.taxable)}</td><td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td></tr>`}).join("")}</tbody></table></div>
@@ -1539,7 +1542,7 @@ const A={
   rmLine:el=>{S.ui.editor.doc.lines.splice(+el.dataset.i,1);render()},
   saveDoc:()=>saveDoc(),
   convertQuote:()=>{const ed=S.ui.editor;if(ed.isNew||!ed.locked){if(saveDoc()===false)return}const q=byId(S.quotations,ed.doc.id);S.ui.route="invoices";S.ui.editor=newDoc("invoice",q);render();window.scrollTo(0,0);toast(`Invoice filled from ${q.no}. Check stock and the invoice type, then save.`)},
-  copyQuote:()=>{const q=S.ui.editor.doc;const n=newDoc("quote");Object.assign(n.doc,{clientId:q.clientId,addrId:q.addrId,lines:q.lines.map(l=>({...l})),billDisc:q.billDisc,billDt:q.billDt,transport:q.transport,fe:q.fe});S.ui.editor=n;render();toast("Copied into a new draft")},
+  copyQuote:()=>{const q=S.ui.editor.doc;const n=newDoc("quote");Object.assign(n.doc,{clientId:q.clientId,addrId:q.addrId,lines:q.lines.map(l=>({...l})),billDisc:q.billDisc,billDt:q.billDt,transport:q.transport,trBy:q.trBy,fe:q.fe});S.ui.editor=n;render();toast("Copied into a new draft")},
   cancelDoc:()=>{const ed=S.ui.editor;openOverlay(`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cxT"><div class="d-head"><h2 id="cxT">Cancel ${esc(ed.doc.no)}?</h2><button class="icon-btn" data-act="close" aria-label="Close">${ic("x")}</button></div><div class="d-body">${ed.kind==="invoice"?`<p style="margin:0">The invoice keeps its number and stays in reports marked Cancelled. Stock goes back and the client's due is reversed.</p>`:""}<div class="field"><label for="cxR">Reason <span class="req">*</span></label><input id="cxR" class="input" placeholder="Why it is being cancelled"></div></div><div class="d-foot"><button class="btn ghost" data-act="close">Keep it</button><button class="btn danger" data-act="doCancel">Cancel ${ed.kind==="invoice"?"invoice":"quotation"}</button></div></div>`,true);setTimeout(()=>$("#cxR").focus(),30)},
   doCancel:()=>{const why=$("#cxR").value.trim();if(!why){$("#cxR").classList.add("err");toast("Enter a reason.");return}const ed=S.ui.editor;const src=ed.kind==="invoice"?S.invoices:S.quotations;const o=byId(src,ed.doc.id);
     if(ed.kind==="invoice"){o.lines.forEach(l=>{prod(l.pid).stock[S.session.location]+=+l.qty});S.receipts.filter(r=>r.auto&&r.alloc.some(a=>a.invId===o.id)).forEach(r=>r.status="Cancelled")}
@@ -1588,6 +1591,7 @@ document.addEventListener("input",e=>{const t=e.target;
   if(ed&&t.dataset.line!=null){const l=ed.doc.lines[+t.dataset.line];const f=t.dataset.lf;l[f]=["dt","batch","exp"].includes(f)?t.value:(t.value===""?"":+t.value||0);if(f==="batch"||f==="exp")return;softRefresh(t);return}
   if(ed&&t.dataset.add!=null){const a=ed.doc.additions[+t.dataset.add];a[t.dataset.af]=t.dataset.af==="amt"?(+t.value||0):t.value;softRefresh(t);return}
   if(ed&&t.dataset.doc){const k=t.dataset.doc;ed.doc[k]=["billDisc","transport"].includes(k)?(+t.value||0):t.value;
+    if(k==="trBy"){render();return}
     if(k==="clientId"){const c=client(t.value);ed.doc.addrId=c?(c.addresses.find(a=>a.def)||c.addresses[0]).id:"";if(c&&!ed.doc.fe)ed.doc.fe=c.fe||"";render();return}
     if(["addrId","supplierId","to","date","type","consignee","purpose","billDt"].includes(k)||t.tagName==="SELECT"){if(k==="date"&&ed.kind==="invoice"&&ed.doc.type==="Credit")ed.doc.dueDate=addDays(t.value,30);render();return}
     softRefresh(t);return}
