@@ -209,12 +209,15 @@ tfoot td{font-weight:600;background:var(--surface-2);border-bottom:0}
 @media (max-width:560px){.party-card{grid-column:auto}}
 .lines td{padding:6px 6px}
 .lines .input{height:32px}
-.lines .qty{width:58px}.lines .rate{width:88px}.lines .disc{width:58px}
+.lines .qty{width:58px}.lines .rate{width:88px}.lines .disc{width:58px}.lines .batch{width:96px}.lines .exp{width:132px}
 .lines td.mono{white-space:nowrap}
 .lines td.desc{min-width:200px}
 .disc-wrap{display:flex;gap:4px;align-items:center}
 .disc-wrap select{width:52px;padding:0 4px}
-.add-line{padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line)}
+.add-line{padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.nav a.sub{padding:5px 10px 5px 37px;font-size:12.5px}
+.nav a.sub.on::before{display:none}
+.nav a.sub.on{background:transparent;color:#fff;font-weight:600}
 .combo{position:relative;flex:1 1 320px;max-width:520px}
 .combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-sm);box-shadow:var(--shadow);z-index:30;max-height:280px;overflow-y:auto}
 .combo-list button{display:flex;width:100%;gap:10px;justify-content:space-between;align-items:center;padding:9px 12px;border:0;background:transparent;cursor:pointer;text-align:left}
@@ -280,6 +283,9 @@ tfoot td{font-weight:600;background:var(--surface-2);border-bottom:0}
 .tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
 .report-layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:900px){.report-layout{grid-template-columns:1fr}}
+/* The report list lives in the sidebar sub menu; the in-page list only shows when the sidebar is folded away */
+.report-layout{grid-template-columns:minmax(0,1fr)}.report-nav{display:none}
+@media (max-width:960px){.report-nav{display:flex}}
 .report-nav{display:flex;flex-direction:column;padding:8px}
 .report-nav button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:var(--r-sm);cursor:pointer;color:var(--muted);font-weight:500}
 .report-nav button small{display:block;font-weight:400;font-size:11.5px;color:var(--faint)}
@@ -415,6 +421,18 @@ tfoot td{border-top:1px solid var(--line-strong)}
 td.mono,td .mono{white-space:nowrap}
 .doc-layout{grid-template-columns:minmax(0,1fr) 320px}
 .lines td.desc{min-width:180px}
+.dash-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:1100px){.dash-3{grid-template-columns:1fr}}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar-row{display:grid;grid-template-columns:minmax(0,1fr) 84px;grid-template-areas:"lab v" "track track";column-gap:10px;row-gap:5px;padding:2px 0;border-radius:6px}
+.bar-row.click{cursor:pointer}.bar-row:hover .bar-lab span{color:var(--accent)}
+.bar-lab{grid-area:lab;min-width:0;display:flex;gap:6px;align-items:baseline}.bar-lab span{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}.bar-lab small{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--faint);font-size:11.5px;white-space:nowrap}
+.bar-v{grid-area:v;text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:13px}
+.bar-track{grid-area:track;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}.bar-track i{display:block;height:100%;border-radius:4px}
+.scroll-list{max-height:320px;overflow-y:auto}
+.list-item.click{cursor:pointer}.list-item.click:hover{background:var(--surface-2)}
+.kpi.click{cursor:pointer;transition:border-color .15s}.kpi.click:hover{border-color:var(--line-strong)}
+.mini{display:flex;flex-direction:column;gap:2px}.mini .k{font-size:12px;color:var(--muted)}.mini .v{font-family:var(--f-mono);font-size:18px;font-weight:600}.mini .v.warn{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -430,6 +448,9 @@ td.mono,td .mono{white-space:nowrap}
    held in memory; nothing is sent anywhere.
    ============================================================ */
 const COMPANY={name:"Sample Medical Imaging Supplies",address:"Plot 12, Industrial Estate, Hyderabad 500032",gstin:"36AABCS1234D1Z5",state:"Telangana",stateCode:"36",upi:"samplebilling@upi",bank:"Sample Bank · A/c 000123456789 · IFSC SMPL0000123"};
+/* Each location is registered for GST separately (decided 15 Oct) */
+const LOCS={Hyderabad:{state:"Telangana",stateCode:"36",gstin:"36AABCS1234D1Z5",address:"Plot 12, Industrial Estate, Hyderabad 500032"},Vijayawada:{state:"Andhra Pradesh",stateCode:"37",gstin:"37AABCS1234D1Z3",address:"D.No. 40-1-52, MG Road, Vijayawada 520010"},Bengaluru:{state:"Karnataka",stateCode:"29",gstin:"29AABCS1234D1Z1",address:"No. 18, Peenya Industrial Area, Bengaluru 560058"}};
+const locOf=n=>LOCS[n]||LOCS.Hyderabad;
 const STATES=[["Telangana","36"],["Andhra Pradesh","37"],["Karnataka","29"],["Tamil Nadu","33"],["Maharashtra","27"],["Kerala","32"]];
 const LOCATIONS=["Hyderabad","Vijayawada","Bengaluru"];
 const DESIGNATIONS=["Admin","Accountant","Sales","Store"];
@@ -448,8 +469,8 @@ const S={
   session:null,
   ui:{route:"dashboard",editor:null,report:"sales",filters:{},sideOpen:false},
   suppliers:[
-    {id:"s1",name:"Precision Imaging Parts Pvt Ltd",gstin:"27AAFCP4567K1Z2",state:"Maharashtra",stateCode:"27",mobile:"9820011122",email:"accounts@precision-parts.example"},
-    {id:"s2",name:"Deccan Medtech Traders",gstin:"36AAKFD8899L1Z9",state:"Telangana",stateCode:"36",mobile:"9849033344",email:"sales@deccanmedtech.example"}
+    {id:"s1",code:"SP-0001",ob:0,name:"Precision Imaging Parts Pvt Ltd",gstin:"27AAFCP4567K1Z2",state:"Maharashtra",stateCode:"27",mobile:"9820011122",email:"accounts@precision-parts.example"},
+    {id:"s2",code:"SP-0002",ob:12000,name:"Deccan Medtech Traders",gstin:"36AAKFD8899L1Z9",state:"Telangana",stateCode:"36",mobile:"9849033344",email:"sales@deccanmedtech.example"}
   ],
   products:[
     {id:"p1",partNo:"CT-FAN-2210",altNo:"ALT-77310",base:"",desc:"CT tube cooling fan assembly",type:"Spare Part",hsn:"90229090",gst:18,rate:18500,unit:"Nos",modality:"CT",equipment:"64-slice CT gantry",location:"Hyderabad",supplierId:"s1",stock:{Hyderabad:6,Vijayawada:2,Bengaluru:0},avgRate:14200,minStock:3,status:"Active"},
@@ -474,9 +495,9 @@ const S={
 };
 const L=(pid,qty,rate,disc=0,dt="%")=>({pid,qty,rate,disc,dt});
 S.quotations=[
-  {id:"q1",no:"QT/26-27/0001",date:"2026-09-22",validTill:"2026-10-22",clientId:"c4",addrId:"a5",lines:[L("p3",1,42000,5)],billDisc:0,billDt:"%",transport:1500,fe:"M. Rao",ref:"Enquiry by e-mail",remarks:"",status:"Sent",rev:0,invoiceNo:""},
+  {id:"q1",no:"QT/26-27/0001",date:"2026-09-22",validTill:"2026-10-22",clientId:"c4",addrId:"a5",lines:[L("p3",1,42000,5)],billDisc:0,billDt:"%",transport:1500,fe:"M. Rao",ref:"Enquiry by e-mail",remarks:"",status:"Pending",rev:0,invoiceNo:""},
   {id:"q2",no:"QT/26-27/0002",date:"2026-10-01",validTill:"2026-10-31",clientId:"c1",addrId:"a2",lines:[L("p4",10,1250),L("p6",20,650)],billDisc:2,billDt:"%",transport:0,fe:"R. Prasad",ref:"",remarks:"",status:"Converted",rev:0,invoiceNo:"INV/26-27/0005"},
-  {id:"q3",no:"QT/26-27/0003",date:"2026-10-06",validTill:"2026-11-05",clientId:"c3",addrId:"a4",lines:[L("p5",4,2800)],billDisc:0,billDt:"%",transport:0,fe:"S. Imran",ref:"",remarks:"",status:"Draft",rev:0,invoiceNo:""}
+  {id:"q3",no:"QT/26-27/0003",date:"2026-10-06",validTill:"2026-11-05",clientId:"c3",addrId:"a4",lines:[L("p5",4,2800)],billDisc:0,billDt:"%",transport:0,fe:"S. Imran",ref:"",remarks:"",status:"Pending",rev:0,invoiceNo:""}
 ];
 S.invoices=[
   {id:"i0a",no:"INV-a",date:"2026-05-14",type:"Cash",clientId:"c3",addrId:"a4",lines:[L("p6",30,650)],billDisc:0,billDt:"%",transport:0,fe:"S. Imran",po:"",remarks:"",status:"Saved",dueDate:"",upiRef:""},
@@ -495,7 +516,7 @@ S.purchases=[
   {id:"pu2",no:"PUR/26-27/0002",supplierId:"s2",supInvNo:"DMT-1192",supInvDate:"2026-09-10",date:"2026-09-10",location:"Hyderabad",lines:[{pid:"p4",qty:50,rate:860,gst:12},{pid:"p6",qty:100,rate:410,gst:12}],additions:[],status:"Saved"}
 ];
 S.declarations=[
-  {id:"d1",no:"DEC/26-27/0001",date:"2026-09-15",from:"Hyderabad",to:"Vijayawada",purpose:"Branch transfer",consignee:"",fe:"K. Lakshmi",transport:"AP 16 TX 4410",lines:[{pid:"p4",qty:20},{pid:"p6",qty:40}],remarks:"",status:"Saved"}
+  {id:"d1",no:"DEC/26-27/0001",date:"2026-09-15",from:"Hyderabad",to:"Vijayawada",purpose:"Branch transfer",consignee:"",fe:"K. Lakshmi",transport:"AP 16 TX 4410",lines:[{pid:"p4",qty:20,rate:1250},{pid:"p6",qty:40,rate:650}],remarks:"",status:"Saved"}
 ];
 S.receipts=[
   {id:"r1",recId:"REC/26-27/0001",recNo:"1041",date:"2026-09-03",clientId:"c3",mode:"Cash",amount:11280,alloc:[{invId:"i2",amt:11280}],ref:"",bank:"",chqDate:"",desc:"Auto receipt for cash invoice",status:"Saved",auto:true},
@@ -510,7 +531,7 @@ S.receipts.push(
   {id:"r0d",recId:"REC-d",recNo:"1040",date:"2026-08-20",clientId:"c4",mode:"Online / Bank Transfer",amount:0,alloc:[{invId:"i0d",amt:0}],ref:"NEFT N2218830",bank:"",chqDate:"",desc:"Full payment",status:"Saved"});
 S.payments=[
   {id:"y1",payId:"PAY/26-27/0001",payType:"General Expense",head:"Office rent",paidTo:"Sri Sai Estates",date:"2026-10-01",mode:"Online / Bank Transfer",ref:"NEFT N2741188",amount:45000,purpose:"October office rent",status:"Saved"},
-  {id:"y2",payId:"PAY/26-27/0002",payType:"Supplier",head:"Supplier payment",paidTo:"Precision Imaging Parts Pvt Ltd",date:"2026-09-05",mode:"Online / Bank Transfer",ref:"RTGS R99102",amount:150000,purpose:"Against PIP/2026/3381",status:"Saved"},
+  {id:"y2",payId:"PAY/26-27/0002",payType:"Supplier",head:"Supplier payment",paidTo:"Precision Imaging Parts Pvt Ltd",date:"2026-09-05",mode:"Online / Bank Transfer",ref:"RTGS R99102",amount:145136,purpose:"Against PIP/2026/3381",status:"Saved"},
   {id:"y3",payId:"PAY/26-27/0003",payType:"General Expense",head:"Courier",paidTo:"Swift Couriers",date:"2026-10-06",mode:"Cash",ref:"",amount:850,purpose:"Spare dispatch to Vijayawada",status:"Saved"}
 ];
 S.messages=[
@@ -523,7 +544,7 @@ S.messages=[
 S.audit=[
   {ts:"2026-10-07 16:41",user:"Sales",loc:"Hyderabad",module:"Sale Invoice",action:"Create",record:"INV/26-27/0006",field:"",old:"",nu:"Grand total ₹32,030",reason:""},
   {ts:"2026-10-06 18:02",user:"Store",loc:"Hyderabad",module:"Product Master",action:"Status change",record:"CT-SLR-1180",field:"Status",old:"Active",nu:"Inactive",reason:"Faulty batch"},
-  {ts:"2026-10-06 11:04",user:"Sales",loc:"Hyderabad",module:"Quotations",action:"Create",record:"QT/26-27/0003",field:"",old:"",nu:"Draft",reason:""},
+  {ts:"2026-10-06 11:04",user:"Sales",loc:"Hyderabad",module:"Quotations",action:"Create",record:"QT/26-27/0003",field:"",old:"",nu:"Pending",reason:""},
   {ts:"2026-10-01 09:12",user:"Accountant",loc:"Hyderabad",module:"Cash Transfer",action:"Create",record:"PAY/26-27/0001",field:"",old:"",nu:"₹45,000.00",reason:""},
   {ts:"2026-09-30 17:20",user:"Accountant",loc:"Hyderabad",module:"Receipts",action:"Edit",record:"REC/26-27/0003",field:"Bank Name",old:"SBI",nu:"State Bank",reason:""},
   {ts:"2026-09-30 09:01",user:"Admin",loc:"Hyderabad",module:"Login",action:"Login",record:"Admin",field:"",old:"",nu:"Financial year 2026-27",reason:""}
@@ -550,6 +571,10 @@ const byId=(arr,id)=>arr.find(x=>x.id===id);
 const prod=id=>byId(S.products,id);
 const client=id=>byId(S.clients,id);
 const supplier=id=>byId(S.suppliers,id);
+const isAdmin=()=>S.session?.designation==="Admin";
+/* CGST, SGST and IGST are always shown as separate amounts */
+const split=(g,intra)=>intra?{c:r2(g/2),s:r2(g-r2(g/2)),i:0}:{c:0,s:0,i:r2(g)};
+const declAmt=d=>r2(d.lines.reduce((a,l)=>a+(+l.qty||0)*(+(l.rate??prod(l.pid).rate)||0),0));
 const stockTotal=p=>Object.values(p.stock).reduce((a,b)=>a+b,0);
 const nextNo=(k,prefix)=>{S.seq[k]++;return `${prefix}/26-27/${String(S.seq[k]).padStart(4,"0")}`};
 function words(n){
@@ -597,22 +622,29 @@ const ICONS={
 const ic=(n,cls="")=>`<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||""}</svg>`;
 function toast(msg){const t=document.createElement("div");t.className="toast";t.innerHTML=ic("check")+`<span>${esc(msg)}</span>`;const box=$("#toasts");box.appendChild(t);while(box.children.length>3)box.firstChild.remove();setTimeout(()=>t.remove(),3200)}
 function audit(module,action,record,field="",old="",nu="",reason=""){S.audit.unshift({ts:nowTs(),user:S.session?.designation||"",loc:S.session?.location||"",module,action,record,field,old,nu,reason})}
-const chipFor=s=>{const m={Active:"good",Inactive:"plain",Draft:"plain",Sent:"accent",Converted:"good",Expired:"warn",Cancelled:"crit",Saved:"good",Paid:"good",Partly:"warn",Unpaid:"warn",Overdue:"crit",Delivered:"good",Read:"good",Failed:"crit",Queued:"plain"};return `<span class="chip ${m[s]||""}">${esc(s)}</span>`};
+const chipFor=s=>{const m={Active:"good",Inactive:"plain",Draft:"plain",Pending:"accent",Converted:"good",Expired:"warn",Cancelled:"crit",Saved:"good",Paid:"good",Partly:"warn",Unpaid:"warn",Overdue:"crit",Delivered:"good",Read:"good",Failed:"crit",Queued:"plain"};return `<span class="chip ${m[s]||""}">${esc(s)}</span>`};
 
 /* ---------- Calculations ---------- */
 function addrOf(doc){const c=client(doc.clientId);if(!c)return null;return c.addresses.find(a=>a.id===doc.addrId)||c.addresses.find(a=>a.def)||c.addresses[0]}
 function calc(doc){
-  const c=client(doc.clientId);const intra=!c||c.stateCode===COMPANY.stateCode;
+  const c=client(doc.clientId);const lo=locOf(doc.loc);const intra=!c||c.stateCode===lo.stateCode;
   const rows=doc.lines.map(l=>{const p=prod(l.pid);const total=r2((+l.qty||0)*(+l.rate||0));let disc=l.dt==="%"?total*(+l.disc||0)/100:(+l.disc||0);disc=Math.min(r2(disc),total);return{l,p,total,disc,taxable:r2(total-disc),gstRate:p?p.gst:0}});
   const basic=r2(rows.reduce((a,r)=>a+r.total,0));const itemDisc=r2(rows.reduce((a,r)=>a+r.disc,0));const pre=r2(basic-itemDisc);
   let billDisc=doc.billDt==="%"?pre*(+doc.billDisc||0)/100:(+doc.billDisc||0);billDisc=Math.min(r2(billDisc),pre);
   let gst=0;rows.forEach(r=>{const share=pre?r.taxable/pre*billDisc:0;r.net=r2(r.taxable-share);r.gst=r2(r.net*r.gstRate/100);r.amount=r2(r.net+r.gst);gst+=r.gst});
-  gst=r2(gst);const taxable=r2(pre-billDisc);const cgst=intra?r2(gst/2):0,sgst=intra?r2(gst-r2(gst/2)):0,igst=intra?0:gst;
-  const transport=r2(+doc.transport||0);const raw=r2(taxable+gst+transport);const grand=Math.round(raw);const round=r2(grand-raw);
-  const hsn={};rows.forEach(r=>{const k=(r.p?.hsn||"-")+"|"+r.gstRate;hsn[k]=hsn[k]||{hsn:r.p?.hsn||"-",rate:r.gstRate,taxable:0,gst:0};hsn[k].taxable+=r.net;hsn[k].gst+=r.gst});
-  return{rows,basic,itemDisc,billDisc,taxable,gst,cgst,sgst,igst,transport,round,grand,intra,hsn:Object.values(hsn)};
+  const taxable=r2(pre-billDisc);const transport=r2(+doc.transport||0);
+  /* Transport is taxable: shared across lines by taxable value, each share taxed at that line's GST rate */
+  let trLeft=transport,trGst=0;const taxed=rows.filter(r=>r.net>0);taxed.forEach((r,i)=>{r.tr=i===taxed.length-1?r2(trLeft):r2(r.net/taxable*transport);trLeft=r2(trLeft-r.tr);r.trGst=r2(r.tr*r.gstRate/100);trGst+=r.trGst});
+  rows.forEach(r=>{r.tr=r.tr||0;r.trGst=r.trGst||0});trGst=r2(trGst);gst=r2(gst+trGst);
+  const cgst=intra?r2(gst/2):0,sgst=intra?r2(gst-r2(gst/2)):0,igst=intra?0:gst;
+  const raw=r2(taxable+gst+transport);const grand=Math.round(raw);const round=r2(grand-raw);
+  const hsn={};rows.forEach(r=>{const k=(r.p?.hsn||"-")+"|"+r.gstRate;hsn[k]=hsn[k]||{hsn:r.p?.hsn||"-",rate:r.gstRate,taxable:0,gst:0};hsn[k].taxable+=r.net+r.tr;hsn[k].gst+=r.gst+r.trGst});
+  return{rows,loc:lo,basic,itemDisc,billDisc,taxable,gst,cgst,sgst,igst,transport,trGst,round,grand,intra,hsn:Object.values(hsn)};
 }
-function purchaseCalc(pu){const sub=pu.lines.reduce((a,l)=>a+(+l.qty||0)*(+l.rate||0),0);const gst=pu.lines.reduce((a,l)=>a+(+l.qty||0)*(+l.rate||0)*(+l.gst||0)/100,0);const add=(pu.additions||[]).reduce((a,x)=>a+(+x.amt||0),0);const sup=supplier(pu.supplierId);const intra=!sup||sup.stateCode===COMPANY.stateCode;return{sub:r2(sub),gst:r2(gst),add:r2(add),total:Math.round(sub+gst+add),intra}}
+function purchaseCalc(pu){const sub=pu.lines.reduce((a,l)=>a+(+l.qty||0)*(+l.rate||0),0);const gst=pu.lines.reduce((a,l)=>a+(+l.qty||0)*(+l.rate||0)*(+l.gst||0)/100,0);const add=(pu.additions||[]).reduce((a,x)=>a+(+x.amt||0),0);const sup=supplier(pu.supplierId);const intra=!sup||sup.stateCode===locOf(pu.location).stateCode;const t=split(r2(gst),intra);return{sub:r2(sub),gst:r2(gst),cgst:t.c,sgst:t.s,igst:t.i,add:r2(add),total:Math.round(sub+gst+add),intra}}
+const supPaid=(s,from="0000",upto="9999")=>r2(S.payments.filter(p=>p.payType==="Supplier"&&p.paidTo===s.name&&p.status!=="Cancelled"&&p.date>=from&&p.date<=upto).reduce((a,p)=>a+p.amount,0));
+const supBought=(s,from="0000",upto="9999")=>r2(S.purchases.filter(p=>p.supplierId===s.id&&p.status!=="Cancelled"&&p.date>=from&&p.date<=upto).reduce((a,p)=>a+purchaseCalc(p).total,0));
+const supplierDue=(s,upto="9999")=>r2((+s.ob||0)+supBought(s,"0000",upto)-supPaid(s,"0000",upto));
 const paidOn=inv=>r2(S.receipts.filter(r=>r.status!=="Cancelled").reduce((a,r)=>a+r.alloc.filter(x=>x.invId===inv.id).reduce((b,x)=>b+x.amt,0),0));
 function invState(inv){if(inv.status==="Cancelled")return"Cancelled";const g=calc(inv).grand,p=paidOn(inv);if(p>=g-0.5)return"Paid";if(inv.type==="Credit"&&inv.dueDate&&inv.dueDate<TODAY)return"Overdue";return p>0?"Partly":"Unpaid"}
 const balanceOf=inv=>inv.status==="Cancelled"?0:r2(Math.max(0,calc(inv).grand-paidOn(inv)));
@@ -638,7 +670,7 @@ function render(){
   root.innerHTML=`<div class="app">
     <aside class="side ${S.ui.sideOpen?"open":""}" aria-label="Modules">
       <div class="brand"><div class="logo">₹B</div>Billing Desk</div>
-      <nav class="nav">${NAV.map(([g,items])=>`<div class="nav-group">${g}</div>`+items.map(([k,l,i])=>`<a href="#${k}" data-act="nav" data-route="${k}" class="${r===k?"on":""}">${ic(i)}${l}${counts[k]?`<span class="count crit">${counts[k]}</span>`:""}</a>`).join("")).join("")}</nav>
+      <nav class="nav">${NAV.map(([g,items])=>`<div class="nav-group">${g}</div>`+items.map(([k,l,i])=>`<a href="#${k}" data-act="nav" data-route="${k}" class="${r===k?"on":""}">${ic(i)}${l}${counts[k]?`<span class="count crit">${counts[k]}</span>`:""}</a>`+(k==="reports"?REPORTS.map(([id,n])=>`<a href="#reports" class="sub ${r==="reports"&&S.ui.report===id?"on":""}" data-act="navReport" data-id="${id}">${n}</a>`).join(""):"")).join("")).join("")}</nav>
       <div class="side-foot"><div class="user"><div class="avatar">${esc(S.session.designation.slice(0,2).toUpperCase())}</div><div style="min-width:0"><b>${esc(S.session.designation)}</b>${esc(S.session.location)} · ${esc(S.session.fy)}</div><button class="icon-btn" data-act="logout" aria-label="Log out" title="Log out">${ic("logout")}</button></div><div>Preview with sample data. Nothing is saved or sent.</div></div>
     </aside>
     ${S.ui.sideOpen?'<div class="scrim" data-act="closeSide"></div>':""}
@@ -671,12 +703,12 @@ function loginView(){
         <p>Quotations, GST invoices, stock and dues for medical imaging supplies, in one place.</p>
       </div>
       <div class="receipt-art" aria-hidden="true">
-        <div class="row"><span>Basic</span><span class="mono">₹40,000.00</span></div>
+        <div class="row"><span>Sub total</span><span class="mono">₹40,000.00</span></div>
         <div class="row"><span>Item discount</span><span class="mono">−₹2,000.00</span></div>
-        <div class="row"><span>CGST 6%</span><span class="mono">₹2,280.00</span></div>
-        <div class="row"><span>SGST 6%</span><span class="mono">₹2,280.00</span></div>
         <div class="row"><span>Transport</span><span class="mono">₹500.00</span></div>
-        <div class="row tot"><span>Grand total</span><span class="mono">₹43,060.00</span></div>
+        <div class="row"><span>CGST 6%</span><span class="mono">₹2,310.00</span></div>
+        <div class="row"><span>SGST 6%</span><span class="mono">₹2,310.00</span></div>
+        <div class="row tot"><span>Grand total</span><span class="mono">₹43,120.00</span></div>
       </div>
     </section>
     <section class="login-form-wrap">
@@ -706,41 +738,70 @@ function bindLogin(){
 function spark(vals){const w=200,h=36,max=Math.max(...vals,1);const pts=vals.map((v,i)=>[i*(w/(vals.length-1)),h-4-(v/max)*(h-8)]);const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");const last=pts[pts.length-1];
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d} L${w} ${h} L0 ${h}Z" fill="var(--accent-soft)"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.6" vector-effect="non-scaling-stroke"/><circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="var(--accent)"/></svg>`}
 var VIEWS={};
+const PERIODS={month:["This month","2026-10-01",TODAY,"1–8 Sep","2026-09-01","2026-09-08"],last:["Last month","2026-09-01","2026-09-30","August","2026-08-01","2026-08-31"],fy:["This year","2026-04-01",TODAY,"",""," "]};
+const salesIn=(a,b)=>S.invoices.filter(i=>i.status!=="Cancelled"&&i.date>=a&&i.date<=b);
+const recIn=(a,b)=>S.receipts.filter(r=>r.status!=="Cancelled"&&r.date>=a&&r.date<=b);
+const sumG=l=>l.reduce((a,i)=>a+calc(i).grand,0);
+const daysBetween=(a,b)=>Math.round((new Date(b+"T00:00:00Z")-new Date(a+"T00:00:00Z"))/864e5);
+/* Horizontal bar list: one hue, value as text beside the bar, hover tooltip on the whole row */
+function barList(items,{color="var(--c1)",empty="Nothing to show"}={}){
+  if(!items.length)return `<div class="empty" style="padding:24px 16px">${empty}</div>`;
+  const max=Math.max(...items.map(x=>x.v),1);
+  return `<div class="bars">${items.map(x=>`<div class="bar-row ${x.act?"click":""}" ${x.act||""} data-tip="${esc(JSON.stringify({t:x.l,r:[[x.c||color,x.k||"Amount",money(x.v)]].concat(x.extra||[])}))}"><div class="bar-lab"><span>${esc(x.l)}</span>${x.sub?`<small>${esc(x.sub)}</small>`:""}</div><div class="bar-track"><i style="width:${Math.max(2,x.v/max*100)}%;background:${x.c||color}"></i></div><span class="bar-v">${money0(x.v)}</span></div>`).join("")}</div>`}
 VIEWS.dashboard=()=>{
+  const pk=S.ui.dashPeriod||"month";const [pl,from,to,cmpL,cf,ct]=PERIODS[pk];
   const live=S.invoices.filter(i=>i.status!=="Cancelled");
-  const month=live.filter(i=>i.date.startsWith("2026-10"));const mSales=month.reduce((a,i)=>a+calc(i).grand,0);
+  const inv=salesIn(from,to),sales=sumG(inv),rec=recIn(from,to).reduce((a,r)=>a+r.amount,0);
+  const prev=cmpL?sumG(salesIn(cf,ct)):null;const delta=prev?Math.round((sales-prev)/prev*100):null;
   const due=S.clients.reduce((a,c)=>a+Math.max(0,clientDue(c)),0);
-  const recM=S.receipts.filter(r=>r.status!=="Cancelled"&&r.date.startsWith("2026-10")).reduce((a,r)=>a+r.amount,0);
+  const overdue=live.filter(i=>invState(i)==="Overdue");const odAmt=overdue.reduce((a,i)=>a+balanceOf(i),0);
+  const payable=S.suppliers.map(s=>[s,supplierDue(s)]).filter(x=>x[1]>0.5);const pay=payable.reduce((a,x)=>a+x[1],0);
   const low=S.products.filter(p=>p.status==="Active"&&stockTotal(p)<=p.minStock);
-  const overdue=live.filter(i=>invState(i)==="Overdue");
-  const sepSales=live.filter(i=>i.date.startsWith("2026-09")).reduce((a,i)=>a+calc(i).grand,0);
+  const expiring=S.quotations.filter(q=>qState(q)==="Pending"&&q.validTill<=addDays(TODAY,7));
+  const pendingQ=S.quotations.filter(q=>qState(q)==="Pending");
   const recent=[...live].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  /* Receivables by age: unpaid balances grouped by days past the due date */
+  const bk=[["Not yet due",0,"var(--c1)"],["1–30 days overdue",0,"var(--warn)"],["31–60 days overdue",0,"var(--crit)"],["Over 60 days overdue",0,"var(--crit)"]];const bn=[0,0,0,0];
+  live.forEach(i=>{const b=balanceOf(i);if(b<=0)return;const d=daysBetween(i.dueDate||i.date,TODAY);const k=d<=0?0:d<=30?1:d<=60?2:3;bk[k][1]+=b;bn[k]++});
+  /* Top clients and products in the chosen period */
+  const byC={};inv.forEach(i=>{byC[i.clientId]=(byC[i.clientId]||0)+calc(i).grand});
+  const topC=Object.entries(byC).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,v])=>({l:client(id).name,sub:client(id).location,v,k:"Sales",act:`data-act="ledgerFromDash" data-id="${id}"`}));
+  const byP={};inv.forEach(i=>calc(i).rows.forEach(r=>{const o=byP[r.p.id]||(byP[r.p.id]={v:0,q:0});o.v+=r.net;o.q+=+r.l.qty}));
+  const topP=Object.entries(byP).sort((a,b)=>b[1].v-a[1].v).slice(0,5).map(([id,o])=>({l:prod(id).desc,sub:prod(id).partNo+" · "+qtyf(o.q)+" "+prod(id).unit,v:o.v,k:"Taxable value",c:"var(--c2)"}));
+  const attn=[
+    ...overdue.map(i=>`<div class="list-item click" data-act="openInvoice" data-id="${i.id}"><span class="chip crit plain">Overdue</span><div class="grow"><div class="title">${esc(client(i.clientId).name)}</div><span class="sub-line">${i.no} · ${daysBetween(i.dueDate,TODAY)} days past due</span></div><span class="mono">${money0(balanceOf(i))}</span></div>`),
+    ...expiring.map(q=>`<div class="list-item click" data-act="openDoc" data-kind="quote" data-id="${q.id}"><span class="chip warn plain">Quote expiring</span><div class="grow"><div class="title">${esc(client(q.clientId).name)}</div><span class="sub-line">${q.no} · valid till ${dfmt(q.validTill)}</span></div><span class="mono">${money0(calc(q).grand)}</span></div>`),
+    ...low.map(p=>`<div class="list-item click" data-act="openProduct" data-id="${p.id}"><span class="chip warn plain">Low stock</span><div class="grow"><div class="title">${esc(p.desc)}</div><span class="sub-line mono">${p.partNo} · ${stockTotal(p)} left, minimum ${p.minStock}</span></div></div>`),
+    ...S.messages.filter(m=>m.status==="Failed").map(m=>`<div class="list-item"><span class="chip crit plain">Message failed</span><div class="grow"><div class="title">${esc(m.to)}</div><span class="sub-line">${m.channel} · ${m.doc}</span></div><button class="btn sm" data-act="nav" data-route="messages">Open</button></div>`)];
+  const kpi=(label,icon,tone,value,foot,act)=>`<div class="panel kpi ${act?"click":""}" ${act||""}><div class="kpi-top"><span class="label">${label}</span><span class="kpi-ic ${tone}">${ic(icon)}</span></div><span class="value">${value}</span><span class="foot">${foot}</span></div>`;
   return `<div class="page-head"><div><h1>Good to see you, ${esc(S.session.designation)}</h1><p>${esc(S.session.location)} · ${dfmt(TODAY)} · Financial year ${esc(S.session.fy)}</p></div>
-    <div class="actions"><button class="btn" data-act="newDoc" data-kind="quote">${ic("quote")}New quotation</button><button class="btn primary" data-act="newDoc" data-kind="invoice">${ic("plus")}New invoice</button></div></div>
+    <div class="actions"><div class="seg" role="group" aria-label="Period">${Object.entries(PERIODS).map(([k,v])=>`<button class="${pk===k?"on":""}" data-act="dashPeriod" data-v="${k}" aria-pressed="${pk===k}">${v[0]}</button>`).join("")}</div><button class="btn" data-act="newDoc" data-kind="quote">${ic("quote")}New quotation</button><button class="btn primary" data-act="newDoc" data-kind="invoice">${ic("plus")}New invoice</button></div></div>
   <div class="kpis">
-    <div class="panel kpi"><div class="kpi-top"><span class="label">Sales this month</span><span class="kpi-ic">${ic("invoice")}</span></div><span class="value">${money0(mSales)}</span><span class="foot">${month.length} invoices in October · September ${money0(sepSales)}</span></div>
-    <div class="panel kpi"><div class="kpi-top"><span class="label">Amount due from clients</span><span class="kpi-ic ${overdue.length?"crit":""}">${ic("users")}</span></div><span class="value">${money0(due)}</span><span class="foot">${overdue.length?`<span class="chip crit">${overdue.length} overdue · ${money0(overdue.reduce((a,i)=>a+balanceOf(i),0))}</span>`:'<span class="chip good">Nothing overdue</span>'}</span></div>
-    <div class="panel kpi"><div class="kpi-top"><span class="label">Received this month</span><span class="kpi-ic good">${ic("in")}</span></div><span class="value">${money0(recM)}</span><span class="foot">${(n=>n+(n===1?" receipt":" receipts"))(S.receipts.filter(r=>r.status!=="Cancelled"&&r.date.startsWith("2026-10")).length)} in October</span></div>
-    <div class="panel kpi"><div class="kpi-top"><span class="label">Products at or below minimum stock</span><span class="kpi-ic ${low.length?"warn":""}">${ic("box")}</span></div><span class="value">${low.length}</span><span class="foot">${low.length?'<span class="chip warn">Reorder needed</span>':'<span class="chip good">All stocked</span>'}</span></div>
+    ${kpi(`Sales · ${pl.toLowerCase()}`,"invoice","",money0(sales),`${inv.length} invoice${inv.length===1?"":"s"}${delta!==null?` · <span class="chip plain ${delta>=0?"good":"crit"}">${delta>=0?"▲":"▼"} ${Math.abs(delta)}%</span> vs ${cmpL}`:""}`,`data-act="nav" data-route="invoices"`)}
+    ${kpi(`Collected · ${pl.toLowerCase()}`,"in","good",money0(rec),sales?`${Math.round(rec/sales*100)}% of sales in the same period`:"No sales in this period",`data-act="nav" data-route="receipts"`)}
+    ${kpi("To receive from clients","users",overdue.length?"crit":"",money0(due),overdue.length?`<span class="chip crit">${overdue.length} overdue · ${money0(odAmt)}</span>`:'<span class="chip good">Nothing overdue</span>',`data-act="reportFromDash" data-id="due"`)}
+    ${kpi("To pay suppliers","truck",pay?"warn":"",money0(pay),payable.length?`Owed to ${payable.length} supplier${payable.length===1?"":"s"}`:'<span class="chip good">All paid</span>',`data-act="reportFromDash" data-id="supdue"`)}
   </div>
   <div class="dash-grid">
-    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
     <div class="panel"><div class="panel-head"><div><h2>Sales and collections</h2><span class="sub-line">Financial year ${esc(S.session.fy)}, by month</span></div><div class="legend"><span><i class="sw" style="background:var(--c1)"></i>Invoiced</span><span><i class="sw" style="background:var(--c2)"></i>Received</span></div></div>${salesChart()}</div>
+    <div class="panel"><div class="panel-head"><h2>Needs attention</h2>${attn.length?`<span class="chip plain">${attn.length}</span>`:""}</div><div class="list scroll-list">${attn.join("")||'<div class="empty">Nothing needs attention.</div>'}</div></div>
+  </div>
+  <div class="dash-3">
+    <div class="panel"><div class="panel-head"><div><h2>Money owed by age</h2><span class="sub-line">Unpaid invoice balances today</span></div></div><div class="panel-body">${barList(bk.filter(b=>b[1]>0||true).map((b,k)=>({l:b[0],sub:bn[k]+" invoice"+(bn[k]===1?"":"s"),v:b[1],c:b[2],k:"Balance"})),{empty:"Nothing is owed."})}</div></div>
+    <div class="panel"><div class="panel-head"><div><h2>Top clients</h2><span class="sub-line">By sales · ${pl.toLowerCase()}</span></div></div><div class="panel-body">${barList(topC,{empty:"No sales in this period."})}</div></div>
+    <div class="panel"><div class="panel-head"><div><h2>Top products</h2><span class="sub-line">By taxable value · ${pl.toLowerCase()}</span></div></div><div class="panel-body">${barList(topP,{color:"var(--c2)",empty:"No sales in this period."})}</div></div>
+  </div>
+  <div class="dash-grid">
     <div class="panel"><div class="panel-head"><h2>Recent invoices</h2><button class="btn sm ghost" data-act="nav" data-route="invoices">View all ${ic("arrow")}</button></div>
-      <div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Client</th><th>Type</th><th class="num">Amount</th><th>Status</th></tr></thead><tbody>
-      ${recent.map(i=>`<tr class="click" data-act="openInvoice" data-id="${i.id}"><td><span class="mono">${i.no}</span><span class="sub-line">${dfmt(i.date)}</span></td><td>${partyCell(client(i.clientId).name)}</td><td>${i.type}</td><td class="num">${money(calc(i).grand)}</td><td>${chipFor(invState(i))}</td></tr>`).join("")}
-      </tbody></table></div></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Client</th><th>Type</th><th class="num">Amount</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>
+      ${recent.map(i=>`<tr class="click" data-act="openInvoice" data-id="${i.id}"><td><span class="mono">${i.no}</span><span class="sub-line">${dfmt(i.date)}</span></td><td>${partyCell(client(i.clientId).name)}</td><td>${i.type}</td><td class="num">${money(calc(i).grand)}</td><td class="num">${balanceOf(i)?money(balanceOf(i)):"—"}</td><td>${chipFor(invState(i))}</td></tr>`).join("")}
+      </tbody></table></div></div>
     <div style="display:flex;flex-direction:column;gap:20px">
-      <div class="panel"><div class="panel-head"><h2>Needs attention</h2></div><div class="list">
-        ${overdue.map(i=>`<div class="list-item"><span class="chip crit plain">Overdue</span><div class="grow"><div class="title">${esc(client(i.clientId).name)}</div><span class="sub-line">${i.no} · due ${dfmt(i.dueDate)}</span></div><span class="mono">${money0(balanceOf(i))}</span></div>`).join("")}
-        ${low.map(p=>`<div class="list-item"><span class="chip warn plain">Low stock</span><div class="grow"><div class="title">${esc(p.desc)}</div><span class="sub-line mono">${p.partNo} · ${stockTotal(p)} in stock, min ${p.minStock}</span></div></div>`).join("")}
-        ${S.messages.filter(m=>m.status==="Failed").map(m=>`<div class="list-item"><span class="chip crit plain">Message failed</span><div class="grow"><div class="title">${esc(m.to)}</div><span class="sub-line">${m.channel} · ${m.doc}</span></div><button class="btn sm" data-act="nav" data-route="messages">Open</button></div>`).join("")}
-        ${!overdue.length&&!low.length?'<div class="empty">Nothing needs attention.</div>':""}
-      </div></div>
+      <div class="panel"><div class="panel-head"><h2>Pending quotations</h2><button class="btn sm ghost" data-act="nav" data-route="quotations">View all ${ic("arrow")}</button></div><div class="panel-body" style="display:flex;gap:24px;flex-wrap:wrap"><div class="mini"><span class="k">Waiting on clients</span><span class="v">${pendingQ.length}</span></div><div class="mini"><span class="k">Value</span><span class="v">${money0(pendingQ.reduce((a,q)=>a+calc(q).grand,0))}</span></div><div class="mini"><span class="k">Expiring in 7 days</span><span class="v ${expiring.length?"warn":""}">${expiring.length}</span></div></div></div>
       <div class="panel"><div class="panel-head"><h2>Quick actions</h2></div><div class="quick">
         <button data-act="openReceipt">${ic("in")}<span>Generate receipt</span><small>Record a client payment</small></button>
+        <button data-act="openPayment">${ic("out")}<span>Generate payment</span><small>Pay a supplier or expense</small></button>
         <button data-act="newDoc" data-kind="purchase">${ic("truck")}<span>New purchase</span><small>Add stock from a supplier</small></button>
-        <button data-act="openProduct">${ic("box")}<span>Add product</span><small>Scan or type a part number</small></button>
         <button data-act="newDoc" data-kind="declaration">${ic("swap")}<span>Transfer stock</span><small>Move stock to a location</small></button>
       </div></div>
     </div>
@@ -756,7 +817,7 @@ VIEWS.products=()=>{
   bases.forEach(b=>{const vars=S.products.filter(v=>v.base===b.partNo);const group=[b,...vars];if(group.some(match))group.forEach(p=>{if(match(p)||(q&&group.some(match)))rows.push(p)})});
   return `<div class="page-head"><div><h1>Product Master</h1><p>Part No. and Alternate Part No. are the barcodes on each product. Variants from other sellers sit under their original.</p></div>
     <div class="actions"><button class="btn primary" data-act="openProduct">${ic("plus")}Add new product</button></div></div>
-  ${(()=>{const act=S.products.filter(p=>p.status==="Active");const low=act.filter(p=>stockTotal(p)<=p.minStock);return statStrip([["Active products",act.length,S.products.length-act.length+" inactive"],["Variants",S.products.filter(p=>p.base).length,"From other sellers"],["At or below minimum",low.length,low.length?"Reorder soon":"All stocked",low.length?"warn":""],["Stock value",money0(S.products.reduce((a,p)=>a+stockTotal(p)*p.avgRate,0)),"At average purchase rate"]])})()}
+  ${(()=>{const act=S.products.filter(p=>p.status==="Active");const low=act.filter(p=>stockTotal(p)<=p.minStock);return statStrip([["Active products",act.length,S.products.length-act.length+" inactive"],["Variants",S.products.filter(p=>p.base).length,"From other sellers"],["At or below minimum",low.length,low.length?"Reorder soon":"All stocked",low.length?"warn":""]])})()}
   <div class="panel">
     <div class="toolbar">
       <div class="field grow"><label for="fpQ">Search or scan</label><div class="search">${ic("scan")}<input id="fpQ" class="input" data-filter="products.q" value="${esc(f.q)}" placeholder="Part No., Alt Part No. or description"></div></div>
@@ -764,8 +825,8 @@ VIEWS.products=()=>{
       <div class="field"><label for="fpM">Modality</label><select id="fpM" class="input" data-filter="products.modality"><option value="">All</option>${MODALITIES.map(x=>`<option ${f.modality===x?"selected":""}>${x}</option>`).join("")}</select></div>
       <div class="field"><label for="fpS">Status</label><select id="fpS" class="input" data-filter="products.status"><option value="">All</option><option ${f.status==="Active"?"selected":""}>Active</option><option ${f.status==="Inactive"?"selected":""}>Inactive</option></select></div>
     </div>
-    <div class="table-wrap"><table><thead><tr><th>Part No.</th><th>Alt Part No.</th><th>Description</th><th>Supplier</th><th>Modality</th><th class="num">GST</th><th class="num">Basic rate</th><th class="num">Avg purchase</th><th class="num">Stock</th><th>Status</th></tr></thead><tbody>
-    ${rows.map(p=>{const st=stockTotal(p);return `<tr class="click ${p.base?"variant":""} ${p.status==="Inactive"?"muted":""}" data-act="openProduct" data-id="${p.id}"><td class="mono">${esc(p.partNo)}${p.base?' <span class="chip plain">Variant</span>':""}</td><td class="mono">${esc(p.altNo)}</td><td>${esc(p.desc)}<span class="sub-line">${esc(p.type)} · HSN ${esc(p.hsn)}</span></td><td>${esc(supplier(p.supplierId)?.name||"")}</td><td>${esc(p.modality)}</td><td class="num">${p.gst}%</td><td class="num">${money(p.rate)}</td><td class="num">${money(p.avgRate)}</td><td class="num">${stockMeter(st,p.minStock,p.status)}</td><td>${chipFor(p.status)}</td></tr>`}).join("")}
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Part No.</th><th>Alt Part No.</th><th>Description</th><th>Supplier</th><th>Modality</th><th class="num">GST</th><th class="num">Rate (excl. GST)</th><th>Status</th></tr></thead><tbody>
+    ${rows.map((p,i)=>{return `<tr class="click ${p.base?"variant":""} ${p.status==="Inactive"?"muted":""}" data-act="openProduct" data-id="${p.id}"><td class="mono">${i+1}</td><td class="mono">${esc(p.partNo)}${p.base?' <span class="chip plain">Variant</span>':""}</td><td class="mono">${esc(p.altNo)}</td><td>${esc(p.desc)}<span class="sub-line">${esc(p.type)} · HSN ${esc(p.hsn)}</span></td><td>${esc(supplier(p.supplierId)?.name||"")}</td><td>${esc(p.modality)}</td><td class="num">${p.gst}%</td><td class="num">${money(p.rate)}</td><td>${chipFor(p.status)}</td></tr>`}).join("")}
     </tbody></table>${rows.length?"":`<div class="empty"><strong>No products match</strong>Scanned a new barcode? <button class="btn sm" data-act="openProduct" data-scan="${esc(f.q)}">Add it as a new product</button></div>`}</div>
   </div>`;
 };
@@ -773,7 +834,7 @@ function productDrawer(id,opts={}){
   const ex=id?prod(id):null;
   const p=ex?{...ex}:{partNo:opts.scan||"",altNo:"",base:"",desc:"",type:"Spare Part",hsn:"",gst:18,rate:"",unit:"Nos",modality:"",equipment:"",location:S.session.location,supplierId:"",openStock:0,openRate:"",minStock:0,status:"Active",avgRate:0};
   if(opts.variantOf){const b=prod(opts.variantOf);const baseNo=b.base||b.partNo;const baseAlt=b.base?prod(S.products.find(x=>x.partNo===b.base).id).altNo:b.altNo;const n=S.products.filter(x=>x.base===baseNo).length+1;Object.assign(p,{...b,id:undefined,base:baseNo,partNo:baseNo+n,altNo:baseAlt+n,supplierId:"",status:"Active",openStock:0,openRate:""})}
-  const isNew=!ex;const used=ex&&(S.invoices.some(i=>i.lines.some(l=>l.pid===ex.id))||S.purchases.some(i=>i.lines.some(l=>l.pid===ex.id))||S.quotations.some(i=>i.lines.some(l=>l.pid===ex.id)));
+  const isNew=!ex;const used=ex&&!isAdmin()&&(S.invoices.some(i=>i.lines.some(l=>l.pid===ex.id))||S.purchases.some(i=>i.lines.some(l=>l.pid===ex.id))||S.quotations.some(i=>i.lines.some(l=>l.pid===ex.id)));
   openOverlay(`<div class="drawer" role="dialog" aria-modal="true" aria-labelledby="pdT">
     <div class="d-head"><div><h2 id="pdT">${opts.variantOf?"Add variant":isNew?"Add new product":"Edit product"}</h2><p>${opts.variantOf?`Same product from another seller. Numbers get the next suffix after ${esc(p.base)}.`:isNew?"Scan the barcode into Part No. or type it.":esc(p.partNo)+" · "+esc(p.desc)}</p></div><button class="icon-btn" data-act="close" aria-label="Close">${ic("x")}</button></div>
     <form class="d-body" id="prodForm" novalidate>
@@ -790,7 +851,7 @@ function productDrawer(id,opts={}){
         <div class="field"><label for="pfSup">Supplier</label><select id="pfSup" class="input"><option value="">Select supplier</option>${S.suppliers.map(s=>`<option value="${s.id}" ${p.supplierId===s.id?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div>
         <div class="field"><label for="pfHsn">HSN code <span class="req">*</span></label><input id="pfHsn" class="input mono" value="${esc(p.hsn)}" inputmode="numeric" placeholder="4, 6 or 8 digits"></div>
         <div class="field"><label for="pfGst">GST (%) <span class="req">*</span></label><select id="pfGst" class="input">${GST_RATES.map(x=>`<option value="${x}" ${+p.gst===x?"selected":""}>${x}%</option>`).join("")}</select></div>
-        <div class="field"><label for="pfRate">Basic rate (without GST) <span class="req">*</span></label><input id="pfRate" class="input mono" value="${esc(p.rate)}" inputmode="decimal" placeholder="0.00"></div>
+        <div class="field"><label for="pfRate">Rate (without GST) <span class="req">*</span></label><input id="pfRate" class="input mono" value="${esc(p.rate)}" inputmode="decimal" placeholder="0.00"></div>
         <div class="field"><label for="pfUnit">Unit <span class="req">*</span></label><select id="pfUnit" class="input">${UNITS.map(x=>`<option ${p.unit===x?"selected":""}>${x}</option>`).join("")}</select></div>
         <div class="field"><label for="pfMod">Modality</label><select id="pfMod" class="input"><option value="">None</option>${MODALITIES.map(x=>`<option ${p.modality===x?"selected":""}>${x}</option>`).join("")}</select></div>
         <div class="field"><label for="pfEq">Equipment</label><input id="pfEq" class="input" value="${esc(p.equipment)}"></div>
@@ -800,7 +861,7 @@ function productDrawer(id,opts={}){
       ${isNew?`<div class="section-title">Opening stock</div><div class="grid g2">
         <div class="field"><label for="pfOs">Opening stock</label><input id="pfOs" class="input mono" value="${esc(p.openStock)}" inputmode="numeric"></div>
         <div class="field"><label for="pfOr">Opening rate</label><input id="pfOr" class="input mono" value="${esc(p.openRate)}" inputmode="decimal" placeholder="Cost per unit"></div></div>`
-      :`<div class="grid g3"><div class="field"><label>Average purchase rate</label><input class="input mono" readonly value="${money(p.avgRate)}"></div><div class="field"><label>Stock in hand</label><input class="input mono" readonly value="${stockTotal(ex)} ${esc(p.unit)}"></div><div class="field"><label>Status</label><input class="input" readonly value="${esc(p.status)}"></div></div>`}
+      :`<div class="grid g3"><div class="field"><label>Status</label><input class="input" readonly value="${esc(p.status)}"></div></div>`}
     </form>
     <div class="d-foot">
       <div class="left">${ex?`${ex.status==="Active"?`<button class="btn" data-act="productStatus" data-id="${ex.id}" data-to="Inactive">Make inactive</button>`:`<button class="btn" data-act="productStatus" data-id="${ex.id}" data-to="Active">Make active</button>`}<button class="btn" data-act="addVariant" data-id="${ex.id}">${ic("plus")}Add variant</button>`:""}</div>
@@ -828,14 +889,14 @@ VIEWS.clients=()=>{
   const sel=S.ui.selClients||(S.ui.selClients=new Set());
   return `<div class="page-head"><div><h1>Client Master</h1><p>One record per client per state. Extra locations in the same state are shipping addresses.</p></div>
     <div class="actions"><button class="btn" data-act="msgClients" ${sel.size?"":"disabled"}>${ic("send")}Send message${sel.size?` (${sel.size})`:""}</button><button class="btn primary" data-act="openClient">${ic("plus")}Register client</button></div></div>
-  ${(()=>{const act=S.clients.filter(c=>c.status==="Active");const dues=S.clients.map(clientDue).filter(d=>d>0);return statStrip([["Active clients",act.length,S.clients.length-act.length+" inactive"],["Shipping addresses",S.clients.reduce((a,c)=>a+c.addresses.filter(x=>x.status==="Active").length,0),"Same-state locations"],["Clients with dues",dues.length,money0(dues.reduce((a,b)=>a+b,0))+" in total",dues.length?"warn":""],["Unregistered (no GSTIN)",S.clients.filter(c=>!c.gstin).length,"Billed as B2C"]])})()}
+  ${(()=>{const act=S.clients.filter(c=>c.status==="Active");return statStrip([["Active clients",act.length,S.clients.length-act.length+" inactive"],["Shipping addresses",S.clients.reduce((a,c)=>a+c.addresses.filter(x=>x.status==="Active").length,0),"Same-state locations"],["Unregistered (no GSTIN)",S.clients.filter(c=>!c.gstin).length,"Billed as B2C"]])})()}
   <div class="panel"><div class="toolbar">
     <div class="field grow"><label for="fcQ">Search</label><div class="search">${ic("search")}<input id="fcQ" class="input" data-filter="clients.q" value="${esc(f.q)}" placeholder="Name, code, mobile or GSTIN"></div></div>
     <div class="field"><label for="fcC">Category</label><select id="fcC" class="input" data-filter="clients.cat"><option value="">All</option>${["Hospital","Imaging Centre","Others"].map(x=>`<option ${f.cat===x?"selected":""}>${x}</option>`).join("")}</select></div>
     <div class="field"><label for="fcS">Status</label><select id="fcS" class="input" data-filter="clients.status"><option value="">All</option><option ${f.status==="Active"?"selected":""}>Active</option><option ${f.status==="Inactive"?"selected":""}>Inactive</option></select></div>
   </div>
-  <div class="table-wrap"><table><thead><tr><th style="width:36px"><input type="checkbox" class="check" data-act="selAllClients" aria-label="Select all" ${rows.length&&rows.every(c=>sel.has(c.id))?"checked":""}></th><th>Code</th><th>Name</th><th>Category</th><th>GSTIN</th><th>State</th><th>Mobile</th><th class="num">Addresses</th><th class="num">Amount due</th><th>Status</th></tr></thead><tbody>
-  ${rows.map(c=>{const d=clientDue(c);return `<tr class="click ${c.status==="Inactive"?"muted":""}" data-act="openClient" data-id="${c.id}"><td data-stop="1"><input type="checkbox" data-act="selClient" data-id="${c.id}" aria-label="Select ${esc(c.name)}" ${sel.has(c.id)?"checked":""}></td><td class="mono">${c.code}</td><td>${partyCell(c.name,c.location)}</td><td>${c.category}</td><td class="mono">${esc(c.gstin)||'<span class="sub-line">Unregistered</span>'}</td><td>${esc(c.state)} <span class="sub-line mono">${c.stateCode}</span></td><td class="mono">${esc(c.mobile)}</td><td class="num">${c.addresses.filter(a=>a.status==="Active").length}</td><td class="num">${d>0?money(d):"—"}</td><td>${chipFor(c.status)}</td></tr>`}).join("")}
+  <div class="table-wrap"><table><thead><tr><th style="width:36px"><input type="checkbox" class="check" data-act="selAllClients" aria-label="Select all" ${rows.length&&rows.every(c=>sel.has(c.id))?"checked":""}></th><th>S. No.</th><th>Code</th><th>Name</th><th>Category</th><th>GSTIN</th><th>State</th><th>Mobile</th><th class="num">Addresses</th></tr></thead><tbody>
+  ${rows.map((c,i)=>{return `<tr class="click ${c.status==="Inactive"?"muted":""}" data-act="openClient" data-id="${c.id}"><td data-stop="1"><input type="checkbox" data-act="selClient" data-id="${c.id}" aria-label="Select ${esc(c.name)}" ${sel.has(c.id)?"checked":""}></td><td class="mono">${i+1}</td><td class="mono">${c.code}</td><td>${partyCell(c.name,c.location)}</td><td>${c.category}</td><td class="mono">${esc(c.gstin)||'<span class="sub-line">Unregistered</span>'}</td><td>${esc(c.state)} <span class="sub-line mono">${c.stateCode}</span></td><td class="mono">${esc(c.mobile)}</td><td class="num">${c.addresses.filter(a=>a.status==="Active").length}</td></tr>`}).join("")}
   </tbody></table>${rows.length?"":'<div class="empty"><strong>No clients match</strong>Try another search or category.</div>'}</div></div>`;
 };
 function clientDrawer(id){
@@ -864,7 +925,7 @@ function clientDrawer(id){
         <div class="field span2"><label for="cfMail">E-mail IDs</label><input id="cfMail" class="input" value="${esc(c.email)}" placeholder="Separate with commas"></div>
         <div class="field span2"><label for="cfBill">Billing address <span class="req">*</span></label><textarea id="cfBill" class="input">${esc(c.billing)}</textarea></div>
         <div class="field"><label for="cfZip">Zip code <span class="req">*</span></label><input id="cfZip" class="input mono" value="${esc(c.zip)}" inputmode="numeric" maxlength="6"></div>
-        <div class="field"><label for="cfFe">FE name</label><input id="cfFe" class="input" value="${esc(c.fe)}" placeholder="Client company's representative"></div>
+        <div class="field"><label for="cfFe">Representative</label><input id="cfFe" class="input" value="${esc(c.fe)}" placeholder="Client company's representative"></div>
       </div>
       <div class="section-title"><span>Shipping addresses</span><label class="check" style="text-transform:none;letter-spacing:0;font-weight:500"><input type="checkbox" id="cfSame">Same as billing</label></div>
       <div id="addrList" style="display:flex;flex-direction:column;gap:10px">${addrHtml()}</div>
@@ -908,44 +969,47 @@ const chan=c=>`<span class="chan ${c}">${ic(c==="E-mail"?"msg":"send")}${c}</spa
 
 /* ---------- Document lists ---------- */
 function listPage({title,sub,newKind,newLabel,cols,rows,rowAttr,empty,filterKey,filters="",stats="",tabs=""}){
+  cols=[["S. No."],...cols];rows=rows.map((r,i)=>({...r,cells:[`<span class="mono">${i+1}</span>`,...r.cells]}));
   return `<div class="page-head"><div><h1>${title}</h1><p>${sub}</p></div><div class="actions"><button class="btn primary" data-act="${newKind.startsWith("open")?newKind:"newDoc"}" data-kind="${newKind}">${ic("plus")}${newLabel}</button></div></div>
   ${stats}<div class="panel">${tabs}${filters?`<div class="toolbar">${filters}</div>`:""}<div class="table-wrap"><table><thead><tr>${cols.map(c=>`<th class="${c[1]||""}">${c[0]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr class="click" ${rowAttr(r)}>${r.cells.map((c,i)=>`<td class="${cols[i][1]||""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table>${rows.length?"":`<div class="empty"><strong>${empty}</strong></div>`}</div></div>`;
 }
 const textFilter=(key,ph)=>{const f=S.ui.filters[key]||(S.ui.filters[key]={q:""});return `<div class="field grow"><label for="f_${key}">Search</label><div class="search">${ic("search")}<input id="f_${key}" class="input" data-filter="${key}.q" value="${esc(f.q)}" placeholder="${ph}"></div></div>`};
 const fq=key=>(S.ui.filters[key]?.q||"").toLowerCase();
-const qState=d=>d.validTill<TODAY&&["Draft","Sent"].includes(d.status)?"Expired":d.status;
+const qState=d=>d.validTill<TODAY&&d.status==="Pending"?"Expired":d.status;
 VIEWS.quotations=()=>{const q=fq("quotations");const st=(S.ui.filters.quotations||(S.ui.filters.quotations={q:""})).st||"";const cnt={"":S.quotations.length};S.quotations.forEach(d=>{const k=qState(d);cnt[k]=(cnt[k]||0)+1});
-  const open=S.quotations.filter(d=>["Draft","Sent"].includes(qState(d)));const conv=S.quotations.filter(d=>d.status==="Converted").length;const soon=open.filter(d=>d.validTill<=addDays(TODAY,7)).length;
+  const open=S.quotations.filter(d=>qState(d)==="Pending");const conv=S.quotations.filter(d=>d.status==="Converted").length;const soon=open.filter(d=>d.validTill<=addDays(TODAY,7)).length;
   const stats=statStrip([["Open quotations",money0(open.reduce((a,d)=>a+calc(d).grand,0)),open.length+" waiting on the client"],["Converted",conv,Math.round(conv/Math.max(S.quotations.length,1)*100)+"% of all quotations","good"],["Expiring in 7 days",soon,soon?"Follow up before they lapse":"None",soon?"warn":""]]);
-  const tabs=fTabs("quotations",[["","All"],["Draft","Draft"],["Sent","Sent"],["Converted","Converted"],["Expired","Expired"],["Cancelled","Cancelled"]],cnt,st);
-  const rows=S.quotations.filter(d=>(!q||(d.no+" "+client(d.clientId).name).toLowerCase().includes(q))&&(!st||qState(d)===st)).sort((a,b)=>b.date.localeCompare(a.date)).map(d=>({id:d.id,cells:[`<span class="mono">${d.no}</span>${d.rev?` <span class="chip plain">Rev ${d.rev}</span>`:""}`,dfmt(d.date),partyCell(client(d.clientId).name,client(d.clientId).code),dfmt(d.validTill),money(calc(d).grand),chipFor(d.validTill<TODAY&&["Draft","Sent"].includes(d.status)?"Expired":d.status),d.invoiceNo?`<span class="mono">${d.invoiceNo}</span>`:"—"]}));
+  const tabs=fTabs("quotations",[["","All"],["Pending","Pending"],["Converted","Converted"],["Expired","Expired"],["Cancelled","Cancelled"]],cnt,st);
+  const rows=S.quotations.filter(d=>(!q||(d.no+" "+client(d.clientId).name).toLowerCase().includes(q))&&(!st||qState(d)===st)).sort((a,b)=>b.date.localeCompare(a.date)).map(d=>({id:d.id,cells:[`<span class="mono">${d.no}</span>${d.rev?` <span class="chip plain">Rev ${d.rev}</span>`:""}`,dfmt(d.date),partyCell(client(d.clientId).name,client(d.clientId).code),dfmt(d.validTill),money(calc(d).grand),chipFor(qState(d)),d.invoiceNo?`<span class="mono">${d.invoiceNo}</span>`:"—"]}));
   return listPage({title:"Quotations",sub:"Price offers to clients. They change no stock or dues until converted to an invoice.",newKind:"quote",newLabel:"New quotation",cols:[["Quote No."],["Date"],["Client"],["Valid till"],["Amount","num"],["Status"],["Invoice"]],rows,rowAttr:r=>`data-act="openDoc" data-kind="quote" data-id="${r.id}"`,empty:"No quotations match",filters:textFilter("quotations","Quote No. or client"),stats,tabs})};
 VIEWS.invoices=()=>{const f=S.ui.filters.invoices||(S.ui.filters.invoices={q:"",type:"",st:""});const q=f.q.toLowerCase();
   const cnt={"":S.invoices.length};S.invoices.forEach(d=>{const k=invState(d);cnt[k]=(cnt[k]||0)+1});const live=S.invoices.filter(d=>d.status!=="Cancelled");
   const billed=live.reduce((a,d)=>a+calc(d).grand,0),outst=live.reduce((a,d)=>a+balanceOf(d),0),od=live.filter(d=>invState(d)==="Overdue").reduce((a,d)=>a+balanceOf(d),0);
   const stats=statStrip([["Invoiced this year",money0(billed),live.length+" invoices"],["Collected",money0(billed-outst),Math.round((billed-outst)/Math.max(billed,1)*100)+"% of invoiced","good"],["Outstanding",money0(outst),"Across "+live.filter(d=>balanceOf(d)>0).length+" invoices"],["Overdue",money0(od),cnt.Overdue?cnt.Overdue+" past due date":"Nothing overdue",od?"crit":""]]);
   const tabs=fTabs("invoices",[["","All"],["Unpaid","Unpaid"],["Partly","Partly paid"],["Overdue","Overdue"],["Paid","Paid"],["Cancelled","Cancelled"]],cnt,f.st);
-  const rows=S.invoices.filter(d=>(!q||(d.no+" "+client(d.clientId).name).toLowerCase().includes(q))&&(!f.type||d.type===f.type)&&(!f.st||invState(d)===f.st)).sort((a,b)=>b.date.localeCompare(a.date)).map(d=>{const c=calc(d);return{id:d.id,cells:[`<span class="mono">${d.no}</span>`,dfmt(d.date),partyCell(client(d.clientId).name,client(d.clientId).code),d.type,money(c.taxable),money(c.gst),money(c.grand),d.status==="Cancelled"?"—":money(balanceOf(d)),chipFor(invState(d))]}});
-  return listPage({title:"Sale Invoice",sub:"GST tax invoices. Saving one reduces stock and, for credit, adds to the client's due.",newKind:"invoice",newLabel:"New invoice",cols:[["Invoice No."],["Date"],["Client"],["Type"],["Taxable","num"],["GST","num"],["Total","num"],["Balance","num"],["Status"]],rows,rowAttr:r=>`data-act="openInvoice" data-id="${r.id}"`,empty:"No invoices match",stats,tabs,filters:textFilter("invoices","Invoice No. or client")+`<div class="field"><label for="fiT">Invoice type</label><select id="fiT" class="input" data-filter="invoices.type"><option value="">All</option>${["Cash","Credit","UPI"].map(x=>`<option ${f.type===x?"selected":""}>${x}</option>`).join("")}</select></div>`})};
+  const rows=S.invoices.filter(d=>(!q||(d.no+" "+client(d.clientId).name).toLowerCase().includes(q))&&(!f.type||d.type===f.type)&&(!f.st||invState(d)===f.st)).sort((a,b)=>b.date.localeCompare(a.date)).map(d=>{const c=calc(d);return{id:d.id,cells:[`<span class="mono">${d.no}</span>`,dfmt(d.date),partyCell(client(d.clientId).name,client(d.clientId).code),d.type,money(c.taxable),money(c.cgst),money(c.sgst),money(c.igst),money(c.grand),d.status==="Cancelled"?"—":money(balanceOf(d)),chipFor(invState(d))]}});
+  return listPage({title:"Sale Invoice",sub:"GST tax invoices. Saving one reduces stock and, for credit, adds to the client's due.",newKind:"invoice",newLabel:"New invoice",cols:[["Invoice No."],["Date"],["Client"],["Type"],["Taxable value","num"],["CGST","num"],["SGST","num"],["IGST","num"],["Total","num"],["Balance","num"],["Status"]],rows,rowAttr:r=>`data-act="openInvoice" data-id="${r.id}"`,empty:"No invoices match",stats,tabs,filters:textFilter("invoices","Invoice No. or client")+`<div class="field"><label for="fiT">Invoice type</label><select id="fiT" class="input" data-filter="invoices.type"><option value="">All</option>${["Cash","Credit","UPI"].map(x=>`<option ${f.type===x?"selected":""}>${x}</option>`).join("")}</select></div>`})};
 VIEWS.purchases=()=>{const q=fq("purchases");const all=S.purchases.filter(p=>p.status!=="Cancelled").map(p=>[p,purchaseCalc(p)]);
-  const stats=statStrip([["Purchased this year",money0(all.reduce((a,x)=>a+x[1].total,0)),all.length+" supplier invoices"],["GST input credit",money0(all.reduce((a,x)=>a+x[1].gst,0)),"Claimable against output GST","good"],["This month",money0(all.filter(x=>x[0].date.startsWith("2026-10")).reduce((a,x)=>a+x[1].total,0)),all.filter(x=>x[0].date.startsWith("2026-10")).length+" purchases in October"],["Suppliers",new Set(all.map(x=>x[0].supplierId)).size,"Bought from this year"]]);const rows=S.purchases.filter(d=>!q||(d.no+" "+d.supInvNo+" "+supplier(d.supplierId).name).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date)).map(d=>{const c=purchaseCalc(d);return{id:d.id,cells:[`<span class="mono">${d.no}</span>`,`<span class="mono">${esc(d.supInvNo)}</span>`,dfmt(d.supInvDate),partyCell(supplier(d.supplierId).name,supplier(d.supplierId).state),d.location,money(c.sub),money(c.gst),money(c.add),money(c.total),chipFor(d.status)]}});
-  return listPage({title:"Purchase",sub:"Stock bought from suppliers. Each purchase updates stock and the average purchase rate.",newKind:"purchase",newLabel:"New purchase",cols:[["Entry No."],["Supplier inv."],["Inv. date"],["Supplier"],["Location"],["Basic","num"],["GST","num"],["Add / Ded","num"],["Total","num"],["Status"]],rows,rowAttr:r=>`data-act="openDoc" data-kind="purchase" data-id="${r.id}"`,empty:"No purchases yet",stats,filters:textFilter("purchases","Entry No., supplier invoice or supplier")})};
+  const stats=statStrip([["Purchased this year",money0(all.reduce((a,x)=>a+x[1].total,0)),all.length+" supplier invoices"],["GST input credit",money0(all.reduce((a,x)=>a+x[1].gst,0)),"Claimable against output GST","good"],["This month",money0(all.filter(x=>x[0].date.startsWith("2026-10")).reduce((a,x)=>a+x[1].total,0)),all.filter(x=>x[0].date.startsWith("2026-10")).length+" purchases in October"],["Suppliers",new Set(all.map(x=>x[0].supplierId)).size,"Bought from this year"]]);const rows=S.purchases.filter(d=>!q||(d.no+" "+d.supInvNo+" "+supplier(d.supplierId).name).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date)).map(d=>{const c=purchaseCalc(d);return{id:d.id,cells:[`<span class="mono">${d.no}</span>`,`<span class="mono">${esc(d.supInvNo)}</span>`,dfmt(d.supInvDate),partyCell(supplier(d.supplierId).name,supplier(d.supplierId).state),d.location,money(c.sub),money(c.cgst),money(c.sgst),money(c.igst),money(c.add),money(c.total),chipFor(d.status)]}});
+  return listPage({title:"Purchase",sub:"Stock bought from suppliers. Each purchase updates stock and the average purchase rate.",newKind:"purchase",newLabel:"New purchase",cols:[["Entry No."],["Supplier inv."],["Inv. date"],["Supplier"],["Location"],["Taxable value","num"],["CGST","num"],["SGST","num"],["IGST","num"],["Add / Ded","num"],["Total","num"],["Status"]],rows,rowAttr:r=>`data-act="openDoc" data-kind="purchase" data-id="${r.id}"`,empty:"No purchases yet",stats,filters:textFilter("purchases","Entry No., supplier invoice or supplier")})};
 VIEWS.declarations=()=>{const q=fq("declarations");const dl=S.declarations.filter(d=>d.status!=="Cancelled");
-  const stats=statStrip([["Transfers this year",dl.length,"Declarations saved"],["Units moved",qtyf(dl.reduce((a,d)=>a+d.lines.reduce((b,l)=>b+(+l.qty),0),0)),"Across all locations"],["Stock value moved",money0(dl.reduce((a,d)=>a+d.lines.reduce((b,l)=>b+l.qty*prod(l.pid).avgRate,0),0)),"At average purchase rate"]]);const rows=S.declarations.filter(d=>!q||(d.no+" "+d.to+" "+d.purpose).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date)).map(d=>({id:d.id,cells:[`<span class="mono">${d.no}</span>`,dfmt(d.date),d.from,d.to,d.purpose,esc(d.consignee?client(d.consignee)?.name:"—"),qtyf(d.lines.reduce((a,l)=>a+l.qty,0)),money(d.lines.reduce((a,l)=>a+l.qty*prod(l.pid).avgRate,0)),chipFor(d.status)]}));
-  return listPage({title:"Declaration",sub:"Stock transfers between locations. Not a sale or a purchase: only stock moves.",newKind:"declaration",newLabel:"New declaration",cols:[["Declaration No."],["Date"],["From"],["To"],["Purpose"],["Consignee"],["Qty","num"],["Value","num"],["Status"]],rows,rowAttr:r=>`data-act="openDoc" data-kind="declaration" data-id="${r.id}"`,empty:"No declarations yet",stats,filters:textFilter("declarations","Declaration No., location or purpose")})};
+  const stats=statStrip([["Transfers this year",dl.length,"Declarations saved"],["Units moved",qtyf(dl.reduce((a,d)=>a+d.lines.reduce((b,l)=>b+(+l.qty),0),0)),"Across all locations"],["Stock transferred",money0(dl.reduce((a,d)=>a+declAmt(d),0)),"At product rate"]]);const rows=S.declarations.filter(d=>!q||(d.no+" "+d.to+" "+d.purpose).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date)).map(d=>({id:d.id,cells:[`<span class="mono">${d.no}</span>`,dfmt(d.date),d.from,d.to,d.purpose,esc(d.consignee?client(d.consignee)?.name:"—"),qtyf(d.lines.reduce((a,l)=>a+l.qty,0)),money(declAmt(d))]}));
+  return listPage({title:"Declaration",sub:"Stock transfers between locations. Not a sale or a purchase: only stock moves.",newKind:"declaration",newLabel:"New declaration",cols:[["Declaration No."],["Date"],["From"],["To"],["Purpose"],["Consignee"],["Qty","num"],["Amount","num"]],rows,rowAttr:r=>`data-act="openDoc" data-kind="declaration" data-id="${r.id}"`,empty:"No declarations yet",stats,filters:textFilter("declarations","Declaration No., location or purpose")})};
 
 /* ---------- Document editor (quotation, invoice, purchase, declaration) ---------- */
 function newDoc(kind,from){
   const c=S.clients.find(x=>x.status==="Active");
-  if(kind==="quote")return{kind,isNew:true,doc:{id:nid("q"),no:"",date:TODAY,validTill:addDays(TODAY,30),clientId:"",addrId:"",lines:[],billDisc:0,billDt:"%",transport:0,fe:"",ref:"",remarks:"",status:"Draft",rev:0,invoiceNo:""}};
-  if(kind==="invoice"){const d={id:nid("i"),no:"",date:TODAY,type:"Credit",clientId:"",addrId:"",lines:[],billDisc:0,billDt:"%",transport:0,fe:"",po:"",remarks:"",status:"Draft",dueDate:addDays(TODAY,30),upiRef:""};
+  if(kind==="quote")return{kind,isNew:true,doc:{id:nid("q"),no:"",loc:S.session.location,date:TODAY,validTill:addDays(TODAY,30),clientId:"",addrId:"",lines:[],billDisc:0,billDt:"%",transport:0,fe:"",ref:"",remarks:"",status:"Draft",rev:0,invoiceNo:""}};
+  if(kind==="invoice"){const d={id:nid("i"),no:"",loc:S.session.location,date:TODAY,type:"Credit",clientId:"",addrId:"",lines:[],billDisc:0,billDt:"%",transport:0,fe:"",po:"",remarks:"",status:"Draft",dueDate:addDays(TODAY,30),upiRef:""};
     if(from){Object.assign(d,{clientId:from.clientId,addrId:from.addrId,lines:from.lines.map(l=>({...l})),billDisc:from.billDisc,billDt:from.billDt,transport:from.transport,fe:from.fe,po:from.ref,quoteNo:from.no,quoteId:from.id,remarks:"Against "+from.no})}
     return{kind,isNew:true,doc:d}}
   if(kind==="purchase")return{kind,isNew:true,doc:{id:nid("pu"),no:"",supplierId:"",supInvNo:"",supInvDate:TODAY,date:TODAY,location:S.session.location,lines:[],additions:[],status:"Draft",supTotal:""}};
   if(kind==="declaration")return{kind,isNew:true,doc:{id:nid("d"),no:"",date:TODAY,from:S.session.location,to:LOCATIONS.find(l=>l!==S.session.location),purpose:"Branch transfer",consignee:"",fe:"",transport:"",lines:[],remarks:"",status:"Draft"}};
 }
 function editorTitle(ed){const n={quote:"Quotation",invoice:"Sale invoice",purchase:"Purchase invoice",declaration:"Declaration"}[ed.kind];return ed.isNew?"New "+n.toLowerCase():`${n} ${ed.doc.no}`}
-function openEditor(kind,id){S.ui.anim=true;const src={quote:S.quotations,invoice:S.invoices,purchase:S.purchases,declaration:S.declarations}[kind];const ex=byId(src,id);S.ui.editor={kind,isNew:false,doc:JSON.parse(JSON.stringify(ex)),locked:kind==="quote"?["Converted","Cancelled"].includes(ex.status):ex.status!=="Draft"};render();window.scrollTo(0,0)}
+function openEditor(kind,id){S.ui.anim=true;const src={quote:S.quotations,invoice:S.invoices,purchase:S.purchases,declaration:S.declarations}[kind];const ex=byId(src,id);S.ui.editor={kind,isNew:false,doc:JSON.parse(JSON.stringify(ex)),locked:ex.status==="Cancelled"||(!isAdmin()&&(kind==="quote"?ex.status==="Converted":ex.status!=="Draft"))};render();window.scrollTo(0,0)}
+/* Stock the line can use: what is on hand plus what this saved document already took */
+function availFor(ed,pid,loc){const p=prod(pid);const st=p.stock[loc]||0;if(ed.isNew)return st;const src={invoice:S.invoices,declaration:S.declarations}[ed.kind];const o=src&&byId(src,ed.doc.id);return st+(o?o.lines.filter(l=>l.pid===pid).reduce((a,l)=>a+(+l.qty||0),0):0)}
 function editorView(ed){
   const d=ed.doc,k=ed.kind,lock=ed.locked||S.session.readOnly;const dis=lock?"disabled":"";
   if(k==="purchase")return purchaseEditor(ed,dis);
@@ -958,55 +1022,58 @@ function editorView(ed){
       :`<div class="field"><label>Invoice type <span class="req">*</span></label><div class="seg" role="group" aria-label="Invoice type">${["Cash","Credit","UPI"].map(x=>`<button type="button" class="${d.type===x?"on":""}" data-act="docType" data-v="${x}" ${dis}>${x}</button>`).join("")}</div></div>`}
     ${c?`<div class="party-card"><b>${esc(c.name)}</b><span>${esc(c.billing)}</span><span class="mono">GSTIN ${esc(c.gstin)||"Unregistered"} · State ${esc(c.state)} (${c.stateCode})</span></div>`:`<div class="party-card"><span>Pick a client to fill the billing address, GSTIN and state.</span></div>`}
     <div class="field span2" style="grid-column:span 2"><label for="edAddr">Shipping address <span class="req">*</span></label><select id="edAddr" class="input" data-doc="addrId" ${dis||(!c?"disabled":"")}>${c?c.addresses.filter(x=>x.status==="Active").map(x=>`<option value="${x.id}" ${a&&a.id===x.id?"selected":""}>${esc(x.label)} · ${esc(x.address)}</option>`).join(""):"<option>Select a client first</option>"}</select></div>
-    <div class="field"><label for="edFe">FE name</label><input id="edFe" class="input" data-doc="fe" value="${esc(d.fe)}" placeholder="Client's representative" ${dis}></div>
+    <div class="field"><label for="edFe">Representative</label><input id="edFe" class="input" data-doc="fe" value="${esc(d.fe)}" placeholder="Client's representative" ${dis}></div>
     ${k==="quote"?`<div class="field"><label for="edRef">Reference</label><input id="edRef" class="input" data-doc="ref" value="${esc(d.ref)}" ${dis}></div>`
       :d.type==="UPI"?`<div class="field"><label for="edUpi">UPI reference <span class="req">*</span></label><input id="edUpi" class="input mono" data-doc="upiRef" value="${esc(d.upiRef)}" ${dis}></div>`
       :d.type==="Credit"?`<div class="field"><label for="edDue">Due date</label><input id="edDue" type="date" class="input" data-doc="dueDate" value="${d.dueDate}" ${dis}></div>`
       :`<div class="field"><label for="edPo">Client PO No.</label><input id="edPo" class="input" data-doc="po" value="${esc(d.po)}" ${dis}></div>`}
   </div>`;
-  const lines=`<div class="card-title sep"><span class="step">2</span>Items<span class="sub-line">Scan a barcode or search to add</span></div><div class="table-wrap"><table class="lines"><thead><tr><th>#</th><th>Product</th>${k==="invoice"?'<th class="num">In stock</th>':""}<th class="num">Qty</th><th class="num">Rate</th><th class="num">Discount</th><th class="num">GST</th><th class="num">Amount</th><th></th></tr></thead><tbody>
-    ${t.rows.map((r,i)=>{const st=r.p.stock[S.session.location]||0;const over=k==="invoice"&&r.l.qty>st;return `<tr><td class="mono">${i+1}</td><td class="desc">${esc(r.p.desc)}<span class="sub-line mono">${esc(r.p.partNo)} · HSN ${r.p.hsn}</span></td>${k==="invoice"?`<td class="num">${over?`<span class="chip crit">${st}</span>`:st}</td>`:""}
+  const lines=`<div class="card-title sep"><span class="step">2</span>Items<span class="sub-line">Scan a barcode or search to add</span></div>${lock?"":productAdder()}<div class="table-wrap"><table class="lines"><thead><tr><th>#</th><th>Product</th>${k==="invoice"?'<th class="num">In stock</th>':""}<th>Batch No.</th><th>Expiry</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Discount</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+    ${t.rows.map((r,i)=>{const st=k==="invoice"?availFor(ed,r.p.id,d.loc||"Hyderabad"):0;const over=k==="invoice"&&r.l.qty>st;const tx=split(r.gst,t.intra);return `<tr><td class="mono">${i+1}</td><td class="desc">${esc(r.p.desc)}<span class="sub-line mono">${esc(r.p.partNo)} · HSN ${r.p.hsn}</span></td>${k==="invoice"?`<td class="num">${over?`<span class="chip crit">${st}</span>`:st}</td>`:""}
+      ${batchCells(r.l,i,dis)}
       <td class="num"><input class="input qty num ${over?"err":""}" data-line="${i}" data-lf="qty" value="${r.l.qty}" inputmode="numeric" aria-label="Quantity" ${dis}></td>
       <td class="num"><input class="input rate num" data-line="${i}" data-lf="rate" value="${r.l.rate}" inputmode="decimal" aria-label="Rate" ${dis}></td>
       <td class="num"><div class="disc-wrap"><input class="input disc num" data-line="${i}" data-lf="disc" value="${r.l.disc||0}" inputmode="decimal" aria-label="Discount" ${dis}><select class="input" data-line="${i}" data-lf="dt" aria-label="Discount type" ${dis}><option ${r.l.dt==="%"?"selected":""}>%</option><option ${r.l.dt==="₹"?"selected":""}>₹</option></select></div></td>
-      <td class="num">${money(r.gst)}<span class="sub-line">${r.gstRate}%</span></td><td class="num">${money(r.amount)}</td>
+      <td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td><td class="num">${money(r.amount)}</td>
       <td>${lock?"":`<button class="icon-btn" data-act="rmLine" data-i="${i}" aria-label="Remove line">${ic("trash")}</button>`}</td></tr>`}).join("")}
-  </tbody></table>${t.rows.length?"":`<div class="empty"><strong>No products yet</strong>Scan a barcode or search below to add the first line.</div>`}</div>
-  ${lock?"":productAdder()}`;
+  </tbody></table>${t.rows.length?"":`<div class="empty"><strong>No products yet</strong>Scan a barcode or search above to add the first line.</div>`}</div>`;
   const foot=`<div class="grid g2" style="padding:2px 16px 16px;align-content:start">
       <div class="field"><label for="edBd">Bill discount</label><div class="disc-wrap"><input id="edBd" class="input num" data-doc="billDisc" value="${d.billDisc||0}" inputmode="decimal" ${dis}><select class="input" data-doc="billDt" aria-label="Bill discount type" ${dis}><option ${d.billDt==="%"?"selected":""}>%</option><option ${d.billDt==="₹"?"selected":""}>₹</option></select></div><span class="hint">Applied after item discounts, spread across lines.</span></div>
       <div class="field"><label for="edTr">Transport charges</label><input id="edTr" class="input num" data-doc="transport" value="${d.transport||0}" inputmode="decimal" ${dis}></div>
       <div class="field span2"><label for="edRem">Remarks</label><textarea id="edRem" class="input" data-doc="remarks" ${dis}>${esc(d.remarks)}</textarea></div>
     </div>`;
-  const summary=`<div class="tax-note">${c?(t.intra?`Intra-state supply (${esc(c.state)}): GST is split into CGST and SGST.`:`Inter-state supply to ${esc(c.state)}: IGST applies.`):"Tax split appears once a client is picked."}</div>
+  const summary=`<div class="tax-note">${c?(t.intra?`Intra-state supply within ${esc(c.state)}, billed from ${esc(d.loc||"Hyderabad")}: GST is split into CGST and SGST.`:`Inter-state supply from ${esc(t.loc.state)} to ${esc(c.state)}: IGST applies.`):"Tax split appears once a client is picked."}</div>
     <div class="totals" id="totals">${totalsHtml(t)}</div>`;
-  const status=k==="quote"?(d.status==="Draft"&&d.validTill<TODAY?"Expired":d.status):invState(d);
+  const status=k==="quote"?qState(d):invState(d);
   const acts=k==="quote"?
     `<div class="actions"><button class="btn ghost" data-act="closeEditor">Close</button>${!ed.isNew&&d.status!=="Converted"&&d.status!=="Cancelled"?`<button class="btn danger" data-act="cancelDoc">Cancel quotation</button>`:""}</div>
-     <div class="actions">${!ed.isNew?`<button class="btn" data-act="previewDoc">${ic("eye")}Preview</button><button class="btn" data-act="copyQuote">${ic("copy")}Copy</button>`:""}${lock?"":`<button class="btn" data-act="saveDoc">Save</button>`}${!lock?`<button class="btn primary" data-act="convertQuote">${ic("arrow")}Convert to invoice</button>`:""}</div>`
+     <div class="actions">${!ed.isNew?`<button class="btn" data-act="previewDoc">${ic("eye")}Preview</button><button class="btn" data-act="copyQuote">${ic("copy")}Copy</button>`:""}${lock?"":`<button class="btn" data-act="saveDoc">Save</button>`}${!lock&&d.status!=="Converted"?`<button class="btn primary" data-act="convertQuote">${ic("arrow")}Convert to invoice</button>`:""}</div>`
     :`<div class="actions"><button class="btn ghost" data-act="closeEditor">Close</button>${!ed.isNew&&d.status!=="Cancelled"?`<button class="btn danger" data-act="cancelDoc">Cancel invoice</button>`:""}</div>
      <div class="actions">${!ed.isNew?`<button class="btn" data-act="previewDoc">${ic("eye")}Preview</button><button class="btn" data-act="sendDoc">${ic("send")}Send</button>`:""}${lock?"":`<button class="btn primary" data-act="saveDoc">Save invoice</button>`}</div>`;
   return `<div class="page-head"><div><button class="back" data-act="closeEditor">${ic("arrow")}${{quote:"Quotations",invoice:"Sale invoices",purchase:"Purchases",declaration:"Declarations"}[ed.kind]}</button><h1>${esc(editorTitle(ed))}</h1><p>${ed.isNew?"Number is assigned when you save.":`${chipFor(status)} ${d.quoteNo?`· from <span class="mono">${d.quoteNo}</span>`:""}${d.invoiceNo?`· invoiced as <span class="mono">${d.invoiceNo}</span>`:""}`}</p></div></div>
-  ${lock&&!S.session.readOnly?`<div class="callout info">${ic("info")}<span>${k==="quote"?"This quotation is "+d.status.toLowerCase()+" and can't be edited.":"Saved invoices are locked. Cancel and re-issue to change one; every change is in the Audit Log."}</span></div>`:""}
-  <div class="doc-layout"><div class="doc-main">
+  ${lock&&!S.session.readOnly?`<div class="callout info">${ic("info")}<span>${k==="quote"?"This quotation is "+d.status.toLowerCase()+" and can't be edited.":"Saved invoices are locked. Cancel and re-issue to change one; every change is in the Audit Log."}</span></div>`:""}${adminNote(ed)}
+  <div class="doc-main" style="margin-bottom:20px">
     <div class="panel"><div class="card-title"><span class="step">1</span>${k==="quote"?"Client and validity":"Client and invoice details"}</div>${head}</div>
-    <div class="panel">${lines}</div>
+    <div class="panel">${lines}</div></div>
+  <div class="doc-layout"><div class="doc-main">
     <div class="panel"><div class="card-title"><span class="step">3</span>Discount, transport and remarks</div>${foot}</div>
   </div><aside class="doc-aside"><div class="panel"><div class="panel-head"><h2>Summary</h2>${ed.isNew?'<span class="chip plain">New</span>':chipFor(status)}</div><div class="panel-body">${summary}<div class="aside-acts">${acts}</div></div></div></aside></div>`;
 }
-function totalsHtml(t){return `<div class="row"><span>Basic</span><span>${money(t.basic)}</span></div>
+const adminNote=ed=>!ed.isNew&&!ed.locked&&isAdmin()&&ed.doc.status!=="Draft"?`<div class="callout info">${ic("info")}<span>As Admin you can change every field of this saved document. Each change is recorded in the Audit Log.</span></div>`:"";
+function totalsHtml(t){return `<div class="row"><span>Sub total</span><span>${money(t.basic)}</span></div>
   ${t.itemDisc?`<div class="row minus"><span>Item discounts</span><span>−${money(t.itemDisc)}</span></div>`:""}
   ${t.billDisc?`<div class="row minus"><span>Bill discount</span><span>−${money(t.billDisc)}</span></div>`:""}
   <div class="row"><span>Taxable value</span><span>${money(t.taxable)}</span></div>
-  ${t.intra?`<div class="row"><span>CGST</span><span>${money(t.cgst)}</span></div><div class="row"><span>SGST</span><span>${money(t.sgst)}</span></div>`:`<div class="row"><span>IGST</span><span>${money(t.igst)}</span></div>`}
-  ${t.transport?`<div class="row"><span>Transport</span><span>${money(t.transport)}</span></div>`:""}
+  ${t.transport?`<div class="row"><span>Transport (taxable)</span><span>${money(t.transport)}</span></div>`:""}
+  <div class="row"><span>CGST</span><span>${money(t.cgst)}</span></div><div class="row"><span>SGST</span><span>${money(t.sgst)}</span></div><div class="row"><span>IGST</span><span>${money(t.igst)}</span></div>
   ${t.round?`<div class="row"><span>Round-off</span><span>${t.round>0?"+":"−"}${money(Math.abs(t.round))}</span></div>`:""}
   <div class="row grand"><span>Grand total</span><span>${money(t.grand)}</span></div>
   <div class="words">Rupees ${words(t.grand)} only</div>`}
+const batchCells=(l,i,dis)=>`<td><input class="input batch" data-line="${i}" data-lf="batch" value="${esc(l.batch||"")}" placeholder="Optional" aria-label="Batch No." ${dis}></td><td><input type="date" class="input exp" data-line="${i}" data-lf="exp" value="${esc(l.exp||"")}" aria-label="Expiry date" ${dis}></td>`;
 function productAdder(){return `<div class="add-line"><div class="combo"><div class="search">${ic("scan")}<input id="adder" class="input" placeholder="Scan barcode or type Part No. / name, then Enter" autocomplete="off" aria-label="Add product"></div><div class="combo-list" id="adderList" hidden></div></div><span class="hint"><span class="kbd">Enter</span> adds an exact barcode match</span></div>`}
 function purchaseEditor(ed,dis){
   const d=ed.doc,t=purchaseCalc(d),sup=supplier(d.supplierId);const lock=!!dis;
-  return `<div class="page-head"><div><button class="back" data-act="closeEditor">${ic("arrow")}${{quote:"Quotations",invoice:"Sale invoices",purchase:"Purchases",declaration:"Declarations"}[ed.kind]}</button><h1>${esc(editorTitle(ed))}</h1><p>${ed.isNew?"Stock is added at "+esc(d.location)+" on the received date.":chipFor(d.status)}</p></div></div>
+  return `<div class="page-head"><div><button class="back" data-act="closeEditor">${ic("arrow")}${{quote:"Quotations",invoice:"Sale invoices",purchase:"Purchases",declaration:"Declarations"}[ed.kind]}</button><h1>${esc(editorTitle(ed))}</h1><p>${ed.isNew?"Stock is added at "+esc(d.location)+" on the received date.":chipFor(d.status)}</p></div></div>${adminNote(ed)}
   <div class="panel"><div class="card-title"><span class="step">1</span>Details</div><div class="doc-head">
     <div class="field" style="grid-column:span 2"><label for="puSup">Supplier <span class="req">*</span></label><select id="puSup" class="input" data-doc="supplierId" ${dis}><option value="">Select supplier</option>${S.suppliers.map(s=>`<option value="${s.id}" ${s.id===d.supplierId?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div>
     <div class="field"><label for="puNo">Supplier invoice No. <span class="req">*</span></label><input id="puNo" class="input mono" data-doc="supInvNo" value="${esc(d.supInvNo)}" ${dis}></div>
@@ -1015,36 +1082,35 @@ function purchaseEditor(ed,dis){
     <div class="field"><label for="puRd">Received date <span class="req">*</span></label><input id="puRd" type="date" class="input" data-doc="date" value="${d.date}" max="${TODAY}" ${dis}></div>
     <div class="field"><label>Location</label><input class="input" readonly value="${esc(d.location)}"></div>
   </div>
-  <div class="card-title sep"><span class="step">2</span>Items<span class="sub-line">Scan a barcode or search to add</span></div><div class="table-wrap"><table class="lines"><thead><tr><th>#</th><th>Part No.</th><th>Description</th><th class="num">Qty</th><th class="num">Purchase rate</th><th class="num">GST</th><th class="num">Amount</th><th class="num">New avg rate</th><th></th></tr></thead><tbody>
-  ${d.lines.map((l,i)=>{const p=prod(l.pid);const st=stockTotal(p);const na=ed.isNew&&(+l.qty)>0?(st*p.avgRate+(+l.qty)*(+l.rate))/(st+(+l.qty)):p.avgRate;return `<tr><td class="mono">${i+1}</td><td class="mono">${esc(p.partNo)}</td><td class="desc">${esc(p.desc)}</td>
+  <div class="card-title sep"><span class="step">2</span>Items<span class="sub-line">Scan a barcode or search to add</span></div>${lock?"":productAdder()}<div class="table-wrap"><table class="lines"><thead><tr><th>#</th><th>Part No.</th><th>Description</th><th>Batch No.</th><th>Expiry</th><th class="num">Qty</th><th class="num">Purchase rate</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+  ${d.lines.map((l,i)=>{const p=prod(l.pid);const tx=split(r2((+l.qty)*(+l.rate)*l.gst/100),t.intra);return `<tr><td class="mono">${i+1}</td><td class="mono">${esc(p.partNo)}</td><td class="desc">${esc(p.desc)}</td>${batchCells(l,i,dis)}
     <td class="num"><input class="input qty num" data-line="${i}" data-lf="qty" value="${l.qty}" aria-label="Quantity" ${dis}></td><td class="num"><input class="input rate num" data-line="${i}" data-lf="rate" value="${l.rate}" aria-label="Rate" ${dis}></td>
-    <td class="num">${l.gst}%</td><td class="num">${money((+l.qty)*(+l.rate)*(1+l.gst/100))}</td><td class="num">${money(na)}<span class="sub-line">was ${money(p.avgRate)}</span></td><td>${lock?"":`<button class="icon-btn" data-act="rmLine" data-i="${i}" aria-label="Remove line">${ic("trash")}</button>`}</td></tr>`}).join("")}
-  </tbody></table>${d.lines.length?"":'<div class="empty"><strong>No products yet</strong>Scan or search to add what was received.</div>'}</div>
-  ${lock?"":productAdder()}
+    <td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td><td class="num">${money((+l.qty)*(+l.rate)*(1+l.gst/100))}</td><td>${lock?"":`<button class="icon-btn" data-act="rmLine" data-i="${i}" aria-label="Remove line">${ic("trash")}</button>`}</td></tr>`}).join("")}
+  </tbody></table>${d.lines.length?"":'<div class="empty"><strong>No products yet</strong>Scan or search above to add what was received.</div>'}</div>
   <div class="card-title sep"><span class="step">3</span>Totals</div><div class="doc-foot"><div style="display:flex;flex-direction:column;gap:10px"><div class="section-title"><span>Additions / deductions</span>${lock?"":`<button class="btn sm" data-act="addAddition">${ic("plus")}Add</button>`}</div>
     ${(d.additions||[]).map((x,i)=>`<div class="grid g2"><div class="field"><label for="adL${i}">Label</label><input id="adL${i}" class="input" data-add="${i}" data-af="label" value="${esc(x.label)}" ${dis}></div><div class="field"><label for="adA${i}">Amount (minus for deduction)</label><input id="adA${i}" class="input num" data-add="${i}" data-af="amt" value="${x.amt}" ${dis}></div></div>`).join("")||'<span class="hint">Freight, packing or a supplier discount.</span>'}
     ${ed.isNew?`<div class="field" style="max-width:240px"><label for="puTot">Total on supplier's invoice</label><input id="puTot" class="input num" data-doc="supTotal" value="${esc(d.supTotal)}" placeholder="To cross-check"></div>`:""}
-  </div><div class="totals"><div class="row"><span>Basic</span><span>${money(t.sub)}</span></div><div class="row"><span>${t.intra?"CGST + SGST":"IGST"}</span><span>${money(t.gst)}</span></div><div class="row"><span>Additions / deductions</span><span>${money(t.add)}</span></div><div class="row grand"><span>Grand total</span><span>${money(t.total)}</span></div>
+  </div><div class="totals"><div class="row"><span>Taxable value</span><span>${money(t.sub)}</span></div><div class="row"><span>CGST</span><span>${money(t.cgst)}</span></div><div class="row"><span>SGST</span><span>${money(t.sgst)}</span></div><div class="row"><span>IGST</span><span>${money(t.igst)}</span></div><div class="row"><span>Additions / deductions</span><span>${money(t.add)}</span></div><div class="row grand"><span>Grand total</span><span>${money(t.total)}</span></div>
     ${d.supTotal&&Math.abs(+d.supTotal-t.total)>1?`<div class="callout" style="margin-top:8px">${ic("alert")}<span>Differs from the supplier's total by ${money(Math.abs(+d.supTotal-t.total))}.</span></div>`:""}</div></div>
   <div class="sticky-actions"><div class="actions"><button class="btn ghost" data-act="closeEditor">Close</button></div><div class="actions">${lock?"":`<button class="btn primary" data-act="saveDoc">Save purchase</button>`}</div></div></div>`;
 }
 function declEditor(ed,dis){
   const d=ed.doc;const lock=!!dis;
-  return `<div class="page-head"><div><button class="back" data-act="closeEditor">${ic("arrow")}${{quote:"Quotations",invoice:"Sale invoices",purchase:"Purchases",declaration:"Declarations"}[ed.kind]}</button><h1>${esc(editorTitle(ed))}</h1><p>${ed.isNew?"Moves stock only. Sales, purchases and dues don't change.":chipFor(d.status)}</p></div></div>
+  return `<div class="page-head"><div><button class="back" data-act="closeEditor">${ic("arrow")}${{quote:"Quotations",invoice:"Sale invoices",purchase:"Purchases",declaration:"Declarations"}[ed.kind]}</button><h1>${esc(editorTitle(ed))}</h1><p>Moves stock only. Sales, purchases and dues don't change.</p></div></div>${adminNote(ed)}
   <div class="panel"><div class="card-title"><span class="step">1</span>Details</div><div class="doc-head">
     <div class="field"><label>From location</label><input class="input" readonly value="${esc(d.from)}"></div>
     <div class="field"><label for="dcTo">To location <span class="req">*</span></label><select id="dcTo" class="input" data-doc="to" ${dis}>${LOCATIONS.filter(l=>l!==d.from).map(l=>`<option ${d.to===l?"selected":""}>${l}</option>`).join("")}</select></div>
     <div class="field"><label for="dcDt">Date <span class="req">*</span></label><input id="dcDt" type="date" class="input" data-doc="date" value="${d.date}" ${dis}></div>
     <div class="field"><label for="dcPu">Purpose <span class="req">*</span></label><select id="dcPu" class="input" data-doc="purpose" ${dis}>${DECL_PURPOSES.map(x=>`<option ${d.purpose===x?"selected":""}>${x}</option>`).join("")}</select></div>
     <div class="field" style="grid-column:span 2"><label for="dcCo">Consignee (client site, optional)</label><select id="dcCo" class="input" data-doc="consignee" ${dis}><option value="">None</option>${S.clients.filter(c=>c.status==="Active").map(c=>`<option value="${c.id}" ${d.consignee===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
-    <div class="field"><label for="dcFe">FE name</label><input id="dcFe" class="input" data-doc="fe" value="${esc(d.fe)}" ${dis}></div>
+    <div class="field"><label for="dcFe">Representative</label><input id="dcFe" class="input" data-doc="fe" value="${esc(d.fe)}" ${dis}></div>
     <div class="field"><label for="dcTr">Vehicle / transporter</label><input id="dcTr" class="input" data-doc="transport" value="${esc(d.transport)}" ${dis}></div>
   </div>
-  <div class="card-title sep"><span class="step">2</span>Items<span class="sub-line">Scan a barcode or search to add</span></div><div class="table-wrap"><table class="lines"><thead><tr><th>#</th><th>Part No.</th><th>Description</th><th class="num">At ${esc(d.from)}</th><th class="num">Qty</th><th class="num">Value (avg rate)</th><th></th></tr></thead><tbody>
-  ${d.lines.map((l,i)=>{const p=prod(l.pid);const st=p.stock[d.from]||0;return `<tr><td class="mono">${i+1}</td><td class="mono">${esc(p.partNo)}</td><td class="desc">${esc(p.desc)}</td><td class="num">${ed.isNew&&l.qty>st?`<span class="chip crit">${st}</span>`:st}</td><td class="num"><input class="input qty num ${ed.isNew&&l.qty>st?"err":""}" data-line="${i}" data-lf="qty" value="${l.qty}" aria-label="Quantity" ${dis}></td><td class="num">${money(l.qty*p.avgRate)}</td><td>${lock?"":`<button class="icon-btn" data-act="rmLine" data-i="${i}" aria-label="Remove line">${ic("trash")}</button>`}</td></tr>`}).join("")}
-  </tbody></table>${d.lines.length?"":'<div class="empty"><strong>No products yet</strong>Scan or search to add what is being moved.</div>'}</div>
-  ${lock?"":productAdder()}
-  <div class="card-title sep"><span class="step">3</span>Totals</div><div class="doc-foot"><div class="field"><label for="dcRem">Remarks</label><textarea id="dcRem" class="input" data-doc="remarks" ${dis}>${esc(d.remarks)}</textarea></div><div class="totals"><div class="row"><span>Total quantity</span><span>${qtyf(d.lines.reduce((a,l)=>a+(+l.qty||0),0))}</span></div><div class="row grand"><span>Stock value moved</span><span>${money(d.lines.reduce((a,l)=>a+(+l.qty||0)*prod(l.pid).avgRate,0))}</span></div></div></div>
+  ${locOf(d.from).stateCode!==locOf(d.to).stateCode?`<div style="padding:0 16px 14px"><div class="callout">${ic("alert")}<span>Inter-state transfer (${esc(locOf(d.from).state)} to ${esc(locOf(d.to).state)}): printed as a tax invoice with IGST under GSTIN ${locOf(d.from).gstin}. A transfer within the same state is a delivery challan with no GST.</span></div></div>`:""}
+  <div class="card-title sep"><span class="step">2</span>Items<span class="sub-line">Scan a barcode or search to add</span></div>${lock?"":productAdder()}<div class="table-wrap"><table class="lines"><thead><tr><th>#</th><th>Part No.</th><th>Description</th><th class="num">At ${esc(d.from)}</th><th>Batch No.</th><th>Expiry</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+  ${d.lines.map((l,i)=>{const p=prod(l.pid);const st=availFor(ed,l.pid,d.from);const over=!lock&&l.qty>st;const rate=l.rate??p.rate;return `<tr><td class="mono">${i+1}</td><td class="mono">${esc(p.partNo)}</td><td class="desc">${esc(p.desc)}</td><td class="num">${over?`<span class="chip crit">${st}</span>`:st}</td>${batchCells(l,i,dis)}<td class="num"><input class="input qty num ${over?"err":""}" data-line="${i}" data-lf="qty" value="${l.qty}" aria-label="Quantity" ${dis}></td><td class="num"><input class="input rate num" data-line="${i}" data-lf="rate" value="${rate}" inputmode="decimal" aria-label="Rate" ${dis}></td><td class="num">${money((+l.qty||0)*(+rate||0))}</td><td>${lock?"":`<button class="icon-btn" data-act="rmLine" data-i="${i}" aria-label="Remove line">${ic("trash")}</button>`}</td></tr>`}).join("")}
+  </tbody></table>${d.lines.length?"":'<div class="empty"><strong>No products yet</strong>Scan or search above to add what is being moved.</div>'}</div>
+  <div class="card-title sep"><span class="step">3</span>Totals</div><div class="doc-foot"><div class="field"><label for="dcRem">Remarks</label><textarea id="dcRem" class="input" data-doc="remarks" ${dis}>${esc(d.remarks)}</textarea></div><div class="totals"><div class="row"><span>Total quantity</span><span>${qtyf(d.lines.reduce((a,l)=>a+(+l.qty||0),0))}</span></div>${locOf(d.from).stateCode!==locOf(d.to).stateCode?`<div class="row"><span>IGST (inter-state)</span><span>${money(d.lines.reduce((a,l)=>a+(+l.qty||0)*(+(l.rate??prod(l.pid).rate)||0)*prod(l.pid).gst/100,0))}</span></div>`:""}<div class="row grand"><span>Stock transferred</span><span>${money(declAmt(d))}</span></div></div></div>
   <div class="sticky-actions"><div class="actions"><button class="btn ghost" data-act="closeEditor">Close</button></div><div class="actions">${lock?"":`<button class="btn primary" data-act="saveDoc">Save declaration</button>`}</div></div></div>`;
 }
 function addLine(pid){
@@ -1052,7 +1118,7 @@ function addLine(pid){
   const ex=d.lines.find(l=>l.pid===pid);
   if(ex){ex.qty=(+ex.qty||0)+1;toast(`${p.partNo}: quantity now ${ex.qty}`)}
   else if(ed.kind==="purchase")d.lines.push({pid,qty:1,rate:p.avgRate||p.rate,gst:p.gst});
-  else if(ed.kind==="declaration")d.lines.push({pid,qty:1});
+  else if(ed.kind==="declaration")d.lines.push({pid,qty:1,rate:p.rate});
   else d.lines.push(L(pid,1,p.rate));
   render();setTimeout(()=>$("#adder")?.focus(),0);
 }
@@ -1062,32 +1128,44 @@ function saveDoc(){
     if(!d.clientId)return fail("Pick a client.");if(!d.lines.length)return fail("Add at least one product.");
     if(d.lines.some(l=>!(+l.qty>0)||!(+l.rate>0)))return fail("Every line needs a quantity and rate above zero.");
     if(k==="invoice"&&d.type==="UPI"&&!d.upiRef.trim())return fail("Enter the UPI reference.");
-    if(k==="invoice"){const short=d.lines.find(l=>l.qty>(prod(l.pid).stock[S.session.location]||0));if(short){const p=prod(short.pid);return fail(`Only ${p.stock[S.session.location]||0} of ${p.partNo} in stock at ${S.session.location}.`)}}
+    if(k==="invoice"){const LL=d.loc||"Hyderabad";const short=d.lines.find(l=>l.qty>availFor(ed,l.pid,LL));if(short){const p=prod(short.pid);return fail(`Only ${availFor(ed,short.pid,LL)} of ${p.partNo} available at ${LL}.`)}}
     const t=calc(d);
-    if(k==="quote"){if(ed.isNew){d.no=nextNo("QT","QT");S.quotations.push(d);audit("Quotations","Create",d.no,"","","Draft")}else{const o=byId(S.quotations,d.id);if(o.status==="Sent"){d.rev=(o.rev||0)+1}Object.assign(o,d);audit("Quotations","Edit",d.no,"","",d.rev?"Revision "+d.rev:"Updated")}
+    if(k==="quote"){if(ed.isNew){d.no=nextNo("QT","QT");d.status="Pending";S.quotations.push(d);audit("Quotations","Create",d.no,"","","Pending")}else{const o=byId(S.quotations,d.id);if(o.status==="Pending"){d.rev=(o.rev||0)+1}Object.assign(o,d);audit("Quotations","Edit",d.no,"","",d.rev?"Revision "+d.rev:"Updated")}
       toast(`Quotation ${d.no} saved`);ed.isNew=false;render();return true}
+    if(!ed.isNew){const o=byId(S.invoices,d.id);const L0=o.loc||"Hyderabad";
+      const short2=d.lines.find(l=>l.qty>availFor(ed,l.pid,L0));if(short2)return fail(`Only ${availFor(ed,short2.pid,L0)} of ${prod(short2.pid).partNo} available at ${L0}.`);
+      const old=calc(o).grand;o.lines.forEach(l=>{prod(l.pid).stock[L0]+=+l.qty});d.lines.forEach(l=>{prod(l.pid).stock[L0]-=+l.qty});
+      if(d.type!=="Credit")d.dueDate="";Object.assign(o,JSON.parse(JSON.stringify(d)));
+      S.receipts.filter(r=>r.auto&&r.status!=="Cancelled"&&r.alloc.some(a=>a.invId===o.id)).forEach(r=>{r.amount=t.grand;r.alloc=[{invId:o.id,amt:t.grand}]});
+      audit("Sale Invoice","Edit",o.no,"Grand total",money0(old),money0(t.grand));S.ui.editor={kind:"invoice",isNew:false,doc:JSON.parse(JSON.stringify(o)),locked:false};render();toast(`Invoice ${o.no} updated`);return true}
     d.no=nextNo("INV","INV");d.status="Saved";if(d.type!=="Credit")d.dueDate="";
     d.lines.forEach(l=>{prod(l.pid).stock[S.session.location]-=+l.qty});S.invoices.push(d);
     audit("Sale Invoice","Create",d.no,"","","Grand total "+money0(t.grand));
     if(d.type!=="Credit"){S.seq.REC++;const r={id:nid("r"),recId:`REC/26-27/${String(S.seq.REC).padStart(4,"0")}`,recNo:"AUTO",date:d.date,clientId:d.clientId,mode:d.type==="UPI"?"UPI":"Cash",amount:t.grand,alloc:[{invId:d.id,amt:t.grand}],ref:d.upiRef||"",bank:"",chqDate:"",desc:`Auto receipt for ${d.type.toLowerCase()} invoice`,status:"Saved",auto:true};S.receipts.push(r);audit("Receipts","Create",r.recId,"","","Auto from "+d.no)}
-    if(d.quoteId){const q=byId(S.quotations,d.quoteId);if(q){q.status="Converted";q.invoiceNo=d.no;audit("Quotations","Status change",q.no,"Status","Sent","Converted")}}
-    S.ui.editor={kind:"invoice",isNew:false,doc:JSON.parse(JSON.stringify(d)),locked:true};render();
+    if(d.quoteId){const q=byId(S.quotations,d.quoteId);if(q){const was=q.status;q.status="Converted";q.invoiceNo=d.no;audit("Quotations","Status change",q.no,"Status",was,"Converted")}}
+    S.ui.editor={kind:"invoice",isNew:false,doc:JSON.parse(JSON.stringify(d)),locked:!isAdmin()};render();
     sendModal({type:"Sale invoice",doc:d.no,party:client(d.clientId),amount:t.grand,docObj:d});return true;
   }
   if(k==="purchase"){
     if(!d.supplierId)return fail("Pick a supplier.");if(!d.supInvNo.trim())return fail("Enter the supplier invoice number.");
-    if(S.purchases.some(p=>p.supplierId===d.supplierId&&p.supInvNo.trim().toLowerCase()===d.supInvNo.trim().toLowerCase()))return fail("This supplier invoice is already entered.");
+    if(S.purchases.some(p=>p.id!==d.id&&p.supplierId===d.supplierId&&p.supInvNo.trim().toLowerCase()===d.supInvNo.trim().toLowerCase()))return fail("This supplier invoice is already entered.");
     if(!d.lines.length)return fail("Add at least one product.");if(d.lines.some(l=>!(+l.qty>0)||!(+l.rate>0)))return fail("Every line needs a quantity and rate above zero.");
+    if(!ed.isNew){const o=byId(S.purchases,d.id);const pids=[...new Set([...o.lines,...d.lines].map(l=>l.pid))];const q=(arr,pid)=>arr.filter(l=>l.pid===pid).reduce((a,l)=>a+(+l.qty||0),0);const v=(arr,pid)=>arr.filter(l=>l.pid===pid).reduce((a,l)=>a+(+l.qty||0)*(+l.rate||0),0);
+      const bad=pids.find(pid=>(prod(pid).stock[o.location]||0)-q(o.lines,pid)+q(d.lines,pid)<0);if(bad)return fail(`${prod(bad).partNo} has already been sold or moved, so its quantity can't go that low.`);
+      pids.forEach(pid=>{const p=prod(pid);const st=stockTotal(p);const nst=st-q(o.lines,pid)+q(d.lines,pid);if(nst>0)p.avgRate=r2(Math.max(0,st*p.avgRate-v(o.lines,pid)+v(d.lines,pid))/nst);p.stock[o.location]=(p.stock[o.location]||0)-q(o.lines,pid)+q(d.lines,pid)});
+      const old=purchaseCalc(o).total;Object.assign(o,JSON.parse(JSON.stringify(d)));audit("Purchase","Edit",o.no,"Total",money0(old),money0(purchaseCalc(o).total));S.ui.editor={kind:"purchase",isNew:false,doc:JSON.parse(JSON.stringify(o)),locked:false};render();toast(`Purchase ${o.no} updated`);return true}
     d.lines.forEach(l=>{const p=prod(l.pid);const st=stockTotal(p);const old=p.avgRate;p.avgRate=r2((st*p.avgRate+(+l.qty)*(+l.rate))/(st+(+l.qty)));p.stock[d.location]=(p.stock[d.location]||0)+(+l.qty);audit("Product Master","Edit",p.partNo,"Average purchase rate",money(old),money(p.avgRate),"From purchase")});
     d.no=nextNo("PUR","PUR");d.status="Saved";S.purchases.push(d);audit("Purchase","Create",d.no,"","",money0(purchaseCalc(d).total));
-    S.ui.editor={kind:"purchase",isNew:false,doc:JSON.parse(JSON.stringify(d)),locked:true};render();
+    S.ui.editor={kind:"purchase",isNew:false,doc:JSON.parse(JSON.stringify(d)),locked:!isAdmin()};render();
     sendModal({type:"Purchase",doc:d.no,party:supplier(d.supplierId),amount:purchaseCalc(d).total});return true;
   }
   if(k==="declaration"){
-    if(!d.lines.length)return fail("Add at least one product.");const short=d.lines.find(l=>!(+l.qty>0)||l.qty>(prod(l.pid).stock[d.from]||0));if(short)return fail(`Not enough ${prod(short.pid).partNo} at ${d.from}.`);
+    if(!d.lines.length)return fail("Add at least one product.");const short=d.lines.find(l=>!(+l.qty>0)||l.qty>availFor(ed,l.pid,d.from));if(short)return fail(`Not enough ${prod(short.pid).partNo} at ${d.from}.`);
+    if(!ed.isNew){const o=byId(S.declarations,d.id);o.lines.forEach(l=>{const p=prod(l.pid);p.stock[o.from]+=+l.qty;p.stock[o.to]-=+l.qty});d.lines.forEach(l=>{const p=prod(l.pid);p.stock[d.from]-=+l.qty;p.stock[d.to]=(p.stock[d.to]||0)+(+l.qty)});
+      Object.assign(o,JSON.parse(JSON.stringify(d)));audit("Declaration","Edit",o.no,"","","Updated");S.ui.editor={kind:"declaration",isNew:false,doc:JSON.parse(JSON.stringify(o)),locked:false};render();toast(`Declaration ${o.no} updated`);return true}
     d.lines.forEach(l=>{const p=prod(l.pid);p.stock[d.from]-=+l.qty;p.stock[d.to]=(p.stock[d.to]||0)+(+l.qty)});
     d.no=nextNo("DEC","DEC");d.status="Saved";S.declarations.push(d);audit("Declaration","Create",d.no,"","",`${d.from} → ${d.to}`);
-    S.ui.editor={kind:"declaration",isNew:false,doc:JSON.parse(JSON.stringify(d)),locked:true};render();
+    S.ui.editor={kind:"declaration",isNew:false,doc:JSON.parse(JSON.stringify(d)),locked:!isAdmin()};render();
     const cons=d.consignee?client(d.consignee):null;sendModal({type:"Declaration",doc:d.no,party:cons||{name:d.to+" branch",email:d.to.toLowerCase()+"@branch.example",mobile:"9000099999",prefs:["E-mail"]}});return true;
   }
 }
@@ -1108,15 +1186,16 @@ function previewInvoice(d,kind="invoice"){
   const c=client(d.clientId),a=addrOf(d),t=calc(d);const isQ=kind==="quote";
   openOverlay(`<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="pvT"><div class="d-head"><div><h2 id="pvT">${isQ?"Quotation":"Tax invoice"} preview</h2><p>What the client receives.</p></div><button class="icon-btn" data-act="close" aria-label="Close">${ic("x")}</button></div>
   <div class="d-body" style="background:var(--surface-2)"><div class="sheet">
-    <div class="s-top"><div><b style="font-size:14px">${COMPANY.name}</b><div>${COMPANY.address}</div><div class="mono">GSTIN ${COMPANY.gstin} · State ${COMPANY.state} (${COMPANY.stateCode})</div></div>
+    <div class="s-top"><div><b style="font-size:14px">${COMPANY.name}</b><div>${locOf(d.loc).address}</div><div class="mono">GSTIN ${locOf(d.loc).gstin} · State ${locOf(d.loc).state} (${locOf(d.loc).stateCode})</div></div>
       <div style="text-align:right"><h3>${isQ?"QUOTATION":"TAX INVOICE"}</h3><div class="mono">${d.no||"(unsaved)"}</div><div>Date: ${dfmt(d.date)}</div>${isQ?`<div>Valid till: ${dfmt(d.validTill)}</div>`:`<div>Type: ${d.type}${d.dueDate?` · Due ${dfmt(d.dueDate)}`:""}</div>`}</div></div>
     <div class="s-parties"><div class="s-box"><div class="s-label">Bill to</div><b>${esc(c.name)}</b><div>${esc(c.billing)}</div><div class="mono">GSTIN ${esc(c.gstin)||"Unregistered"} · State code ${c.stateCode}</div></div>
-      <div class="s-box"><div class="s-label">Ship to · ${esc(a?.label||"")}</div><div>${esc(a?.address||"")} ${esc(a?.zip||"")}</div><div>Place of supply: ${esc(c.state)} (${c.stateCode})</div>${d.fe?`<div>FE: ${esc(d.fe)}</div>`:""}</div></div>
-    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Description</th><th>HSN</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Disc.</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Amount</th></tr></thead><tbody>
-    ${t.rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.p.desc)}<div style="color:#777;font-size:10.5px" class="mono">${esc(r.p.partNo)}</div></td><td class="mono">${r.p.hsn}</td><td class="num">${r.l.qty} ${r.p.unit}</td><td class="num">${money(r.l.rate)}</td><td class="num">${r.disc?money(r.disc):"—"}</td><td class="num">${money(r.net)}</td><td class="num">${r.gstRate}%<div style="font-size:10.5px">${money(r.gst)}</div></td><td class="num">${money(r.amount)}</td></tr>`).join("")}
+      <div class="s-box"><div class="s-label">Ship to · ${esc(a?.label||"")}</div><div>${esc(a?.address||"")} ${esc(a?.zip||"")}</div><div>Place of supply: ${esc(c.state)} (${c.stateCode})</div>${d.fe?`<div>Representative: ${esc(d.fe)}</div>`:""}</div></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Description</th><th>HSN</th><th>Batch / Expiry</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Disc.</th><th class="num">Taxable</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Amount</th></tr></thead><tbody>
+    ${t.rows.map((r,i)=>{const tx=split(r.gst,t.intra);return `<tr><td>${i+1}</td><td>${esc(r.p.desc)}<div style="color:#777;font-size:10.5px" class="mono">${esc(r.p.partNo)}</div></td><td class="mono">${r.p.hsn}</td><td>${esc(r.l.batch||"—")}${r.l.exp?`<div style="font-size:10.5px">Exp. ${dfmt(r.l.exp)}</div>`:""}</td><td class="num">${r.l.qty} ${r.p.unit}</td><td class="num">${money(r.l.rate)}</td><td class="num">${r.disc?money(r.disc):"—"}</td><td class="num">${money(r.net)}</td><td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td><td class="num">${money(r.amount)}</td></tr>`}).join("")}
+    ${t.transport?(tx=>`<tr><td></td><td>Transport charges<div style="color:#777;font-size:10.5px">Taxed at each item's GST rate</div></td><td></td><td></td><td></td><td></td><td></td><td class="num">${money(t.transport)}</td><td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td><td class="num">${money(t.transport+t.trGst)}</td></tr>`)(split(t.trGst,t.intra)):""}
     </tbody></table></div>
     <div class="s-bottom"><div style="display:flex;flex-direction:column;gap:10px">
-      <div style="overflow-x:auto"><table><thead><tr><th>HSN</th><th class="num">Taxable</th>${t.intra?'<th class="num">CGST</th><th class="num">SGST</th>':'<th class="num">IGST</th>'}</tr></thead><tbody>${t.hsn.map(h=>`<tr><td class="mono">${h.hsn} @ ${h.rate}%</td><td class="num">${money(h.taxable)}</td>${t.intra?`<td class="num">${money(h.gst/2)}</td><td class="num">${money(h.gst/2)}</td>`:`<td class="num">${money(h.gst)}</td>`}</tr>`).join("")}</tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>HSN</th><th class="num">Taxable</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th></tr></thead><tbody>${t.hsn.map(h=>{const tx=split(r2(h.gst),t.intra);return `<tr><td class="mono">${h.hsn}</td><td class="num">${money(h.taxable)}</td><td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td></tr>`}).join("")}</tbody></table></div>
       ${isQ?"":`<div class="qr"><div class="qr-box" id="qrBox"></div><div><b>Scan to pay ${money(t.grand)}</b><div>UPI ID: <span class="mono">${COMPANY.upi}</span></div><div style="color:#666">${COMPANY.bank}</div></div></div>`}
       <div style="color:#555">Amount in words: Rupees ${words(t.grand)} only</div></div>
       <div class="totals" style="color:#1a1a1a">${totalsHtml(t).replace(/class="words"[^<]*<\/div>/,'class="words"></div>')}</div></div>
@@ -1143,13 +1222,13 @@ VIEWS.payments=()=>{
   </tbody>${rows.length?`<tfoot><tr><td colspan="8">Net amount</td><td class="num">${money(net)}</td></tr></tfoot>`:""}</table>${rows.length?"":'<div class="empty"><strong>No payments in this range</strong>Change the dates or types.</div>'}</div></div>`;
 };
 function paymentDrawer(id){
-  const ex=id?byId(S.payments,id):null;const p=ex||{payType:"General Expense",head:"",paidTo:"",date:TODAY,mode:"Cash",ref:"",chqDate:"",bank:"",amount:"",purpose:""};const ro=ex?"disabled":"";
-  openOverlay(`<div class="drawer" role="dialog" aria-modal="true" aria-labelledby="pyT"><div class="d-head"><div><h2 id="pyT">${ex?"Payment "+ex.payId:"Generate payment"}</h2><p>${ex?"Saved payments are read-only here.":"Payment ID is assigned on save."}</p></div><button class="icon-btn" data-act="close" aria-label="Close">${ic("x")}</button></div>
+  const ex=id?byId(S.payments,id):null;const p=ex?{...ex}:{payType:"General Expense",head:"",paidTo:"",date:TODAY,mode:"Cash",ref:"",chqDate:"",bank:"",amount:"",purpose:""};const ro=ex&&!isAdmin()?"disabled":"";S.ui.payEx=ex;
+  openOverlay(`<div class="drawer" role="dialog" aria-modal="true" aria-labelledby="pyT"><div class="d-head"><div><h2 id="pyT">${ex?"Payment "+ex.payId:"Generate payment"}</h2><p>${ex?(ro?"Only Admin can change a saved payment.":"Changes are recorded in the Audit Log."):"Payment ID is assigned on save."}</p></div><button class="icon-btn" data-act="close" aria-label="Close">${ic("x")}</button></div>
   <form class="d-body" id="payForm" novalidate>
     <div class="field"><label>Pay type <span class="req">*</span></label><div class="seg" role="group">${PAY_TYPES.map(x=>`<button type="button" class="${p.payType===x?"on":""}" data-act="payType" data-v="${x}" ${ro}>${x}</button>`).join("")}</div></div>
     <div class="grid g2" id="payFields">${payFields(p,ro)}</div>
   </form>
-  <div class="d-foot">${ex?`<button class="btn" data-act="close">Close</button>`:`<button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="savePayment">Save payment</button>`}</div></div>`);
+  <div class="d-foot">${ro?`<button class="btn" data-act="close">Close</button>`:`<button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="savePayment">Save payment</button>`}</div></div>`);
   S.ui.payDraft=p;
 }
 function payFields(p,ro=""){
@@ -1169,6 +1248,7 @@ function readPay(){const p=S.ui.payDraft;const v=s=>$(s)?$(s).value.trim():"";Ob
 function savePayment(){const p=readPay();const errs=[];const mark=(s,ok)=>{if(!$(s))return;$(s).classList.toggle("err",!ok);if(!ok)errs.push(s)};
   mark("#pyHead",!!p.head);mark("#pyTo",!!p.paidTo);mark("#pyAmt",+p.amount>0);mark("#pyPur",!!p.purpose);if(p.mode!=="Cash")mark("#pyRef",!!p.ref);
   if(errs.length){toast("Fix the highlighted fields.");$(errs[0]).focus();return}
+  const ex=S.ui.payEx;if(ex){const nu={payType:p.payType,head:p.head,paidTo:p.paidTo,date:p.date,mode:p.mode,ref:p.ref,amount:+p.amount,purpose:p.purpose};Object.keys(nu).forEach(k=>{if(String(ex[k])!==String(nu[k]))audit("Cash Transfer","Edit",ex.payId,k,ex[k],nu[k])});Object.assign(ex,nu);closeOverlay();render();toast(`Payment ${ex.payId} updated`);return}
   const rec={id:nid("y"),payId:nextNo("PAY","PAY"),payType:p.payType,head:p.head,paidTo:p.paidTo,date:p.date,mode:p.mode,ref:p.ref,amount:+p.amount,purpose:p.purpose,status:"Saved"};S.payments.push(rec);audit("Cash Transfer","Create",rec.payId,"","",money(rec.amount));
   closeOverlay();render();toast(`Payment ${rec.payId} saved`);
 }
@@ -1190,9 +1270,9 @@ VIEWS.receipts=()=>{
     <div class="field"><label for="frT">End date</label><input id="frT" type="date" class="input" data-filter="receipts.to" value="${f.to}"></div>
     <div class="field grow"><label for="frC">Payee name</label><select id="frC" class="input" data-filter="receipts.client"><option value="">All clients</option>${S.clients.map(c=>`<option value="${c.id}" ${f.client===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
     <div class="field"><label for="frM">Rec. mode</label><select id="frM" class="input" data-filter="receipts.mode"><option value="">All</option>${MODES.map(m=>`<option ${f.mode===m?"selected":""}>${m}</option>`).join("")}</select></div>
-  </div><div class="table-wrap"><table><thead><tr><th>Rec. ID</th><th>Rec. No.</th><th>Rec. date</th><th>Payee name</th><th>Mode</th><th>Invoices settled</th><th class="num">Amount</th><th>Status</th></tr></thead><tbody>
-  ${rows.map(r=>`<tr class="click" data-act="openReceipt" data-id="${r.id}"><td class="mono">${r.recId}</td><td class="mono">${esc(r.recNo)}</td><td>${dfmt(r.date)}</td><td>${partyCell(client(r.clientId).name)}</td><td>${r.mode}<span class="sub-line mono">${esc(r.ref)}</span></td><td class="mono">${r.alloc.map(a=>byId(S.invoices,a.invId)?.no||"").join(", ")||"On account"}</td><td class="num">${money(r.amount)}</td><td>${r.auto?'<span class="chip plain">Auto</span> ':""}${chipFor(r.status)}</td></tr>`).join("")}
-  </tbody>${rows.length?`<tfoot><tr><td colspan="6">Total received</td><td class="num">${money(tot)}</td><td></td></tr></tfoot>`:""}</table>${rows.length?"":'<div class="empty"><strong>No receipts in this range</strong></div>'}</div></div>`;
+  </div><div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Rec. ID</th><th>Rec. No.</th><th>Rec. date</th><th>Payee name</th><th>Mode</th><th>Invoices settled</th><th class="num">Amount</th></tr></thead><tbody>
+  ${rows.map((r,i)=>`<tr class="click" data-act="openReceipt" data-id="${r.id}"><td class="mono">${i+1}</td><td class="mono">${r.recId}</td><td class="mono">${esc(r.recNo)}${r.auto?' <span class="chip plain">Auto</span>':""}</td><td>${dfmt(r.date)}</td><td>${partyCell(client(r.clientId).name)}</td><td>${r.mode}<span class="sub-line mono">${esc(r.ref)}</span></td><td class="mono">${r.alloc.map(a=>byId(S.invoices,a.invId)?.no||"").join(", ")||"On account"}</td><td class="num">${money(r.amount)}</td></tr>`).join("")}
+  </tbody>${rows.length?`<tfoot><tr><td colspan="7">Total received</td><td class="num">${money(tot)}</td></tr></tfoot>`:""}</table>${rows.length?"":'<div class="empty"><strong>No receipts in this range</strong></div>'}</div></div>`;
 };
 function receiptDrawer(id){
   const ex=id?byId(S.receipts,id):null;
@@ -1238,57 +1318,69 @@ function saveReceipt(print){
 
 /* ---------- Reports ---------- */
 const REPORTS=[
-  ["sales","Day-wise Sales Summary","Reports › Sale Summary"],["stock","Consolidated Stock Summary","Reports › Stock Summary"],["purch","Purchase Summary","Reports › Purch. Summary"],
-  ["due","Customer Due Summary","Reports › Client Due Report"],["decl","Day-wise Declaration Summary","Reports › Declarations"],["itemsale","Item-wise Sale Summary","Reports › Item Wise Sales"],["itempur","Item-wise Purchase Rates","Reports › Purchase History"]
+  ["sales","Periodic Sales Summary","Reports › Sale Summary"],["stock","Consolidated Stock Summary","Reports › Stock Summary"],["purch","Purchase Summary","Reports › Purch. Summary"],
+  ["due","Customer Due Summary","Reports › Client Due Report"],["supdue","Supplier Due Summary","Reports › Supplier Due Report"],["decl","Periodic Declaration Summary","Reports › Declarations"],["itemsale","Item-wise Sale Summary","Reports › Item Wise Sales"],["itempur","Item-wise Purchase Rates","Reports › Purchase History"]
 ];
 VIEWS.reports=()=>{
   const k=S.ui.report;const R=REPORT_VIEWS[S.ui.subReport?S.ui.subReport.kind:k]();
   return `<div class="page-head"><div><h1>Reports</h1><p>Filter, review and export. Click a row to open what's behind it.</p></div></div>
-  <div class="report-layout"><div class="panel report-nav" role="tablist">${REPORTS.map(([id,n,p])=>`<button class="${k===id&&!S.ui.subReport?"on":""}" data-act="report" data-id="${id}" role="tab"><span class="rn">${ic({sales:"invoice",stock:"box",purch:"truck",due:"users",decl:"swap",itemsale:"chart",itempur:"quote"}[id])}<span>${n}<small>${p}</small></span></span></button>`).join("")}</div>
+  <div class="report-layout"><div class="panel report-nav" role="tablist">${REPORTS.map(([id,n,p])=>`<button class="${k===id&&!S.ui.subReport?"on":""}" data-act="report" data-id="${id}" role="tab"><span class="rn">${ic({sales:"invoice",stock:"box",purch:"truck",due:"users",decl:"swap",itemsale:"chart",itempur:"quote",supdue:"truck"}[id])}<span>${n}<small>${p}</small></span></span></button>`).join("")}</div>
   <div class="panel">${R}</div></div>`;
 };
 const rf=(k,def)=>S.ui.filters["r_"+k]||(S.ui.filters["r_"+k]=def);
 const dateF=(k,f)=>`<div class="field"><label for="${k}F">Start date</label><input id="${k}F" type="date" class="input" data-filter="r_${k}.from" value="${f.from}"></div><div class="field"><label for="${k}T">End date</label><input id="${k}T" type="date" class="input" data-filter="r_${k}.to" value="${f.to}"></div>`;
-const reportHead=(t,sub,extra="")=>`<div class="panel-head"><div><h2>${t}</h2>${sub?`<span class="sub-line">${sub}</span>`:""}</div><div class="actions">${extra}<button class="btn sm" data-act="export">Export to Excel</button></div></div>`;
+const reportHead=(t,sub,extra="")=>`<div class="panel-head"><div><h2>${t}</h2>${sub?`<span class="sub-line">${sub}</span>`:""}</div><div class="actions">${extra}<button class="btn sm" data-act="export" data-fmt="xls">Export to Excel</button><button class="btn sm" data-act="export" data-fmt="pdf">Export to PDF</button></div></div>`;
 const REPORT_VIEWS={
   sales(){const f=rf("sales",{from:"2026-04-01",to:TODAY,type:"",q:""});const rows=S.invoices.filter(i=>i.status!=="Cancelled"&&i.date>=f.from&&i.date<=f.to&&(!f.type||i.type===f.type)&&(!f.q||client(i.clientId).name.toLowerCase().includes(f.q.toLowerCase()))).sort((a,b)=>a.date.localeCompare(b.date));
-    const T={tr:0,b:0,c:0,s:0,i:0,g:0};const body=rows.map(i=>{const c=calc(i),cl=client(i.clientId);T.tr+=c.transport;T.b+=c.taxable;T.c+=c.cgst;T.s+=c.sgst;T.i+=c.igst;T.g+=c.grand;return `<tr class="click" data-act="openInvoice" data-id="${i.id}"><td class="mono">${i.no}</td><td>${dfmt(i.date)}</td><td>${esc(cl.name)}</td><td class="mono">${esc(cl.gstin)}</td><td>${i.type}</td><td class="mono">${cl.stateCode}</td><td class="num">${money(c.transport)}</td><td class="num">${money(c.taxable)}</td><td class="num">${money(c.cgst)}</td><td class="num">${money(c.sgst)}</td><td class="num">${money(c.igst)}</td><td class="num">${money(c.grand)}</td><td>${esc(i.fe)}</td></tr>`}).join("");
-    return reportHead("Day-wise Sales Summary",`${rows.length} invoices`)+`<div class="toolbar">${dateF("sales",f)}<div class="field"><label for="rsT">Sale type</label><select id="rsT" class="input" data-filter="r_sales.type"><option value="">All</option>${["Cash","Credit","UPI"].map(x=>`<option ${f.type===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="field grow"><label for="rsQ">Customer name</label><input id="rsQ" class="input" data-filter="r_sales.q" value="${esc(f.q)}"></div></div>
-    <div class="table-wrap"><table><thead><tr><th>Invoice No.</th><th>Date</th><th>Client name</th><th>GSTIN</th><th>Type</th><th>State</th><th class="num">Transport</th><th class="num">Basic</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Total</th><th>FE name</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="6">Total</td><td class="num">${money(T.tr)}</td><td class="num">${money(T.b)}</td><td class="num">${money(T.c)}</td><td class="num">${money(T.s)}</td><td class="num">${money(T.i)}</td><td class="num">${money(T.g)}</td><td></td></tr></tfoot></table></div>`},
+    const T={tr:0,b:0,c:0,s:0,i:0,g:0};const body=rows.map((i,n)=>{const c=calc(i),cl=client(i.clientId);T.tr+=c.transport;T.b+=c.taxable;T.c+=c.cgst;T.s+=c.sgst;T.i+=c.igst;T.g+=c.grand;return `<tr class="click" data-act="openInvoice" data-id="${i.id}"><td class="mono">${n+1}</td><td class="mono">${i.no}</td><td>${dfmt(i.date)}</td><td>${esc(cl.name)}</td><td class="mono">${esc(cl.gstin)}</td><td>${i.type}</td><td class="mono">${cl.stateCode}</td><td class="num">${money(c.transport)}</td><td class="num">${money(c.taxable)}</td><td class="num">${money(c.cgst)}</td><td class="num">${money(c.sgst)}</td><td class="num">${money(c.igst)}</td><td class="num">${money(c.grand)}</td><td>${esc(i.fe)}</td></tr>`}).join("");
+    return reportHead("Periodic Sales Summary",`${rows.length} invoices`)+`<div class="toolbar">${dateF("sales",f)}<div class="field"><label for="rsT">Sale type</label><select id="rsT" class="input" data-filter="r_sales.type"><option value="">All</option>${["Cash","Credit","UPI"].map(x=>`<option ${f.type===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="field grow"><label for="rsQ">Customer name</label><input id="rsQ" class="input" data-filter="r_sales.q" value="${esc(f.q)}"></div></div>
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Invoice No.</th><th>Date</th><th>Client name</th><th>GSTIN</th><th>Type</th><th>State</th><th class="num">Transport</th><th class="num">Taxable value</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Total</th><th>Representative</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="7">Total</td><td class="num">${money(T.tr)}</td><td class="num">${money(T.b)}</td><td class="num">${money(T.c)}</td><td class="num">${money(T.s)}</td><td class="num">${money(T.i)}</td><td class="num">${money(T.g)}</td><td></td></tr></tfoot></table></div>`},
   stock(){const f=rf("stock",{q:"",loc:""});const q=f.q.toLowerCase();const rows=S.products.filter(p=>!q||[p.partNo,p.altNo,p.desc].join(" ").toLowerCase().includes(q));
     const inw=p=>S.purchases.filter(x=>x.status!=="Cancelled").reduce((a,x)=>a+x.lines.filter(l=>l.pid===p.id).reduce((b,l)=>b+(+l.qty),0),0);
     const sold=p=>S.invoices.filter(x=>x.status!=="Cancelled").reduce((a,x)=>a+x.lines.filter(l=>l.pid===p.id).reduce((b,l)=>b+(+l.qty),0),0);
-    let tv=0;const body=rows.map(p=>{const net=f.loc?(p.stock[f.loc]||0):stockTotal(p);const val=net*p.avgRate;tv+=val;return `<tr class="click ${p.status==="Inactive"?"muted":""}" data-act="clientRates" data-id="${p.id}"><td class="mono">${p.partNo}</td><td>${esc(p.desc)}</td><td>${f.loc||p.location}</td><td class="num">${inw(p)}</td><td class="num">${sold(p)}</td><td class="num">${net<=p.minStock&&p.status==="Active"?`<span class="chip warn">${net}</span>`:net}</td><td class="num">${money(p.avgRate)}</td><td class="num">${money(val)}</td><td>${p.type}</td><td>${p.modality}</td><td class="mono">${p.altNo}</td></tr>`}).join("");
+    let tv=0;const body=rows.map((p,n)=>{const net=f.loc?(p.stock[f.loc]||0):stockTotal(p);const val=net*p.avgRate;tv+=val;return `<tr class="click ${p.status==="Inactive"?"muted":""}" data-act="clientRates" data-id="${p.id}"><td class="mono">${n+1}</td><td class="mono">${p.partNo}</td><td>${esc(p.desc)}</td><td>${f.loc||p.location}</td><td class="num">${inw(p)}</td><td class="num">${sold(p)}</td><td class="num">${net<=p.minStock&&p.status==="Active"?`<span class="chip warn">${net}</span>`:net}</td><td class="num">${money(p.avgRate)}</td><td class="num">${money(val)}</td><td>${p.type}</td><td>${p.modality}</td><td class="mono">${p.altNo}</td></tr>`}).join("");
     return reportHead("Consolidated Stock Summary","Current position. Item price is the average purchase rate.")+`<div class="toolbar"><div class="field grow"><label for="rkQ">Search text</label><div class="search">${ic("scan")}<input id="rkQ" class="input" data-filter="r_stock.q" value="${esc(f.q)}" placeholder="Part No., Alt Part No. or description"></div></div><div class="field"><label for="rkL">Location</label><select id="rkL" class="input" data-filter="r_stock.loc"><option value="">All locations</option>${LOCATIONS.map(l=>`<option ${f.loc===l?"selected":""}>${l}</option>`).join("")}</select></div></div>
-    <div class="table-wrap"><table><thead><tr><th>Part No.</th><th>Item description</th><th>Location</th><th class="num">I/w qty</th><th class="num">Sale qty</th><th class="num">Net stock</th><th class="num">Item price</th><th class="num">Stock value</th><th>Item type</th><th>Modality</th><th>Alt. Part No.</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="7">Total stock value</td><td class="num">${money(tv)}</td><td colspan="3"></td></tr></tfoot></table></div>`},
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Part No.</th><th>Item description</th><th>Location</th><th class="num">I/w qty</th><th class="num">Sale qty</th><th class="num">Net stock</th><th class="num">Item price</th><th class="num">Stock value</th><th>Item type</th><th>Modality</th><th>Alt. Part No.</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="8">Total stock value</td><td class="num">${money(tv)}</td><td colspan="3"></td></tr></tfoot></table></div>`},
   clientRates(){const p=prod(S.ui.subReport.id);const f=rf("cr",{from:"2026-04-01",to:TODAY});const rows=[];S.invoices.filter(i=>i.status!=="Cancelled"&&i.date>=f.from&&i.date<=f.to).forEach(i=>i.lines.filter(l=>l.pid===p.id).forEach(l=>rows.push({i,l})));
     return reportHead("Client-wise Item Rates",`<span class="mono">${p.partNo}</span> · ${esc(p.desc)}`,`<button class="btn sm ghost" data-act="backReport">← Stock summary</button>`)+`<div class="toolbar"><div class="field"><label for="crF">Start date</label><input id="crF" type="date" class="input" data-filter="r_cr.from" value="${f.from}"></div><div class="field"><label for="crT">End date</label><input id="crT" type="date" class="input" data-filter="r_cr.to" value="${f.to}"></div></div>
-    <div class="table-wrap"><table><thead><tr><th>Invoice No.</th><th>Date</th><th>Customer name</th><th class="num">Quantity</th><th class="num">Rate</th><th class="num">Total</th></tr></thead><tbody>${rows.map(({i,l})=>`<tr class="click" data-act="openInvoice" data-id="${i.id}"><td class="mono">${i.no}</td><td>${dfmt(i.date)}</td><td>${esc(client(i.clientId).name)}</td><td class="num">${l.qty}</td><td class="num">${money(l.rate)}</td><td class="num">${money(l.qty*l.rate)}</td></tr>`).join("")}</tbody></table>${rows.length?"":'<div class="empty"><strong>No sales of this item in the range</strong></div>'}</div>`},
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Invoice No.</th><th>Date</th><th>Customer name</th><th class="num">Quantity</th><th class="num">Rate</th><th class="num">Total</th></tr></thead><tbody>${rows.map(({i,l},n)=>`<tr class="click" data-act="openInvoice" data-id="${i.id}"><td class="mono">${n+1}</td><td class="mono">${i.no}</td><td>${dfmt(i.date)}</td><td>${esc(client(i.clientId).name)}</td><td class="num">${l.qty}</td><td class="num">${money(l.rate)}</td><td class="num">${money(l.qty*l.rate)}</td></tr>`).join("")}</tbody>${rows.length?`<tfoot><tr><td colspan="4">Total</td><td class="num">${qtyf(rows.reduce((a,x)=>a+(+x.l.qty),0))}</td><td></td><td class="num">${money(rows.reduce((a,x)=>a+x.l.qty*x.l.rate,0))}</td></tr></tfoot>`:""}</table>${rows.length?"":'<div class="empty"><strong>No sales of this item in the range</strong></div>'}</div>`},
   purch(){const f=rf("purch",{from:"2026-04-01",to:TODAY,sup:""});const rows=S.purchases.filter(p=>p.date>=f.from&&p.date<=f.to&&(!f.sup||p.supplierId===f.sup));let T={b:0,g:0,a:0,t:0};
-    const body=rows.map(p=>{const c=purchaseCalc(p);const s=supplier(p.supplierId);T.b+=c.sub;T.g+=c.gst;T.a+=c.add;T.t+=c.total;return `<tr class="click" data-act="openDoc" data-kind="purchase" data-id="${p.id}"><td class="mono">${esc(p.supInvNo)}</td><td>${dfmt(p.supInvDate)}</td><td>${esc(s.name)}<span class="sub-line mono">${s.gstin}</span></td><td class="num">${money(c.sub)}</td><td class="num">${money(c.gst)}</td><td class="num">${money(c.add)}</td><td class="num">${money(c.total)}</td></tr>`}).join("");
+    T.c=0;T.s=0;T.i=0;const body=rows.map((p,n)=>{const c=purchaseCalc(p);const s=supplier(p.supplierId);T.b+=c.sub;T.c+=c.cgst;T.s+=c.sgst;T.i+=c.igst;T.a+=c.add;T.t+=c.total;return `<tr class="click" data-act="openDoc" data-kind="purchase" data-id="${p.id}"><td class="mono">${n+1}</td><td class="mono">${esc(p.supInvNo)}</td><td>${dfmt(p.supInvDate)}</td><td>${esc(s.name)}<span class="sub-line mono">${s.gstin}</span></td><td class="num">${money(c.sub)}</td><td class="num">${money(c.cgst)}</td><td class="num">${money(c.sgst)}</td><td class="num">${money(c.igst)}</td><td class="num">${money(c.add)}</td><td class="num">${money(c.total)}</td></tr>`}).join("");
     return reportHead("Purchase Summary",`${rows.length} purchases`)+`<div class="toolbar">${dateF("purch",f)}<div class="field grow"><label for="rpS">Supplier</label><select id="rpS" class="input" data-filter="r_purch.sup"><option value="">All suppliers</option>${S.suppliers.map(s=>`<option value="${s.id}" ${f.sup===s.id?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div></div>
-    <div class="table-wrap"><table><thead><tr><th>Supplier inv. No.</th><th>Invoice date</th><th>Supplier name / GSTIN</th><th class="num">Basic</th><th class="num">GST / IGST</th><th class="num">Add / Ded</th><th class="num">Amount</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="3">Total</td><td class="num">${money(T.b)}</td><td class="num">${money(T.g)}</td><td class="num">${money(T.a)}</td><td class="num">${money(T.t)}</td></tr></tfoot></table></div>`},
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Supplier inv. No.</th><th>Invoice date</th><th>Supplier name / GSTIN</th><th class="num">Taxable value</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Add / Ded</th><th class="num">Amount</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="4">Total</td><td class="num">${money(T.b)}</td><td class="num">${money(T.c)}</td><td class="num">${money(T.s)}</td><td class="num">${money(T.i)}</td><td class="num">${money(T.a)}</td><td class="num">${money(T.t)}</td></tr></tfoot></table></div>`},
   due(){const f=rf("due",{from:"2026-04-01",to:TODAY,cat:"",zero:false});const prev=addDays(f.from,-1);
     const rows=S.clients.filter(c=>!f.cat||c.category===f.cat).map(c=>{const ob=clientDue(c,prev);const sale=S.invoices.filter(i=>i.clientId===c.id&&i.status!=="Cancelled"&&i.date>=f.from&&i.date<=f.to).reduce((a,i)=>a+calc(i).grand,0);const cr=S.receipts.filter(r=>r.clientId===c.id&&r.status!=="Cancelled"&&r.date>=f.from&&r.date<=f.to).reduce((a,r)=>a+r.amount,0);return{c,ob,sale,cr,close:r2(ob+sale-cr)}}).filter(x=>f.zero||Math.abs(x.close)>0.5);
     const T=rows.reduce((a,x)=>({ob:a.ob+x.ob,s:a.s+x.sale,c:a.c+x.cr,cl:a.cl+x.close}),{ob:0,s:0,c:0,cl:0});
     return reportHead("Consolidated Customer Due Summary","Opening balance = OB amount plus everything before the start date.")+`<div class="toolbar">${dateF("due",f)}<div class="field"><label for="rdC">Category</label><select id="rdC" class="input" data-filter="r_due.cat"><option value="">All</option>${["Hospital","Imaging Centre","Others"].map(x=>`<option ${f.cat===x?"selected":""}>${x}</option>`).join("")}</select></div><label class="check" style="height:36px"><input type="checkbox" data-filter="r_due.zero" ${f.zero?"checked":""}>Include zero-due clients</label></div>
-    <div class="table-wrap"><table><thead><tr><th>Client ID</th><th>Client name</th><th class="num">Opening balance</th><th class="num">Total sale</th><th class="num">Total credits</th><th class="num">Closing balance</th></tr></thead><tbody>${rows.map(x=>`<tr class="click" data-act="ledger" data-id="${x.c.id}"><td class="mono">${x.c.code}</td><td>${esc(x.c.name)}</td><td class="num">${money(x.ob)}</td><td class="num">${money(x.sale)}</td><td class="num">${money(x.cr)}</td><td class="num"><b>${money(x.close)}</b></td></tr>`).join("")}</tbody><tfoot><tr><td colspan="2">Net amount due</td><td class="num">${money(T.ob)}</td><td class="num">${money(T.s)}</td><td class="num">${money(T.c)}</td><td class="num">${money(T.cl)}</td></tr></tfoot></table></div>`},
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Client ID</th><th>Client name</th><th class="num">Opening balance</th><th class="num">Total sale</th><th class="num">Total credits</th><th class="num">Closing balance</th></tr></thead><tbody>${rows.map((x,n)=>`<tr class="click" data-act="ledger" data-id="${x.c.id}"><td class="mono">${n+1}</td><td class="mono">${x.c.code}</td><td>${esc(x.c.name)}</td><td class="num">${money(x.ob)}</td><td class="num">${money(x.sale)}</td><td class="num">${money(x.cr)}</td><td class="num"><b>${money(x.close)}</b></td></tr>`).join("")}</tbody><tfoot><tr><td colspan="3">Net amount due</td><td class="num">${money(T.ob)}</td><td class="num">${money(T.s)}</td><td class="num">${money(T.c)}</td><td class="num">${money(T.cl)}</td></tr></tfoot></table></div>`},
+  supdue(){const f=rf("supdue",{from:"2026-04-01",to:TODAY,zero:false});const prev=addDays(f.from,-1);
+    const rows=S.suppliers.map(s=>{const ob=supplierDue(s,prev);const bought=supBought(s,f.from,f.to);const paid=supPaid(s,f.from,f.to);return{s,ob,bought,paid,close:r2(ob+bought-paid)}}).filter(x=>f.zero||Math.abs(x.close)>0.5);
+    const T=rows.reduce((a,x)=>({ob:a.ob+x.ob,b:a.b+x.bought,p:a.p+x.paid,cl:a.cl+x.close}),{ob:0,b:0,p:0,cl:0});
+    return reportHead("Consolidated Supplier Due Summary","What you owe each supplier. Opening balance = supplier OB plus everything before the start date.")+`<div class="toolbar">${dateF("supdue",f)}<label class="check" style="height:36px"><input type="checkbox" data-filter="r_supdue.zero" ${f.zero?"checked":""}>Include zero-due suppliers</label></div>
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Supplier ID</th><th>Supplier name</th><th class="num">Opening balance</th><th class="num">Total purchase</th><th class="num">Total paid</th><th class="num">Closing balance</th></tr></thead><tbody>${rows.map((x,n)=>`<tr class="click" data-act="supLedger" data-id="${x.s.id}"><td class="mono">${n+1}</td><td class="mono">${x.s.code}</td><td>${esc(x.s.name)}</td><td class="num">${money(x.ob)}</td><td class="num">${money(x.bought)}</td><td class="num">${money(x.paid)}</td><td class="num"><b>${money(x.close)}</b></td></tr>`).join("")}</tbody><tfoot><tr><td colspan="3">Net amount payable</td><td class="num">${money(T.ob)}</td><td class="num">${money(T.b)}</td><td class="num">${money(T.p)}</td><td class="num">${money(T.cl)}</td></tr></tfoot></table>${rows.length?"":'<div class="empty"><strong>Nothing is owed to suppliers in this range</strong></div>'}</div>`},
+  supLedger(){const s=supplier(S.ui.subReport.id);const f=rf("supdue",{from:"2026-04-01",to:TODAY});const ob=supplierDue(s,addDays(f.from,-1));
+    const ent=[...S.purchases.filter(p=>p.supplierId===s.id&&p.status!=="Cancelled"&&p.date>=f.from&&p.date<=f.to).map(p=>({date:p.date,part:`Purchase ${p.no} · supplier inv. ${esc(p.supInvNo)}`,cr:purchaseCalc(p).total,dr:0,act:`data-act="openDoc" data-kind="purchase" data-id="${p.id}"`})),...S.payments.filter(p=>p.payType==="Supplier"&&p.paidTo===s.name&&p.status!=="Cancelled"&&p.date>=f.from&&p.date<=f.to).map(p=>({date:p.date,part:`Payment ${p.payId} · ${p.mode}`,cr:0,dr:p.amount,act:`data-act="openPayment" data-id="${p.id}"`}))].sort((a,b)=>a.date.localeCompare(b.date));
+    let bal=ob;
+    return reportHead("Detailed Supplier Account",esc(s.name)+" · "+s.code,`<button class="btn sm ghost" data-act="backReport">← Supplier dues</button>`)+`<div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Date</th><th>Particulars</th><th class="num">Paid (debit)</th><th class="num">Purchased (credit)</th><th class="num">Balance payable</th></tr></thead><tbody>
+    <tr><td></td><td>${dfmt(f.from)}</td><td>Opening balance</td><td class="num"></td><td class="num"></td><td class="num">${money(ob)}</td></tr>
+    ${ent.map((e,n)=>{bal=r2(bal+e.cr-e.dr);return `<tr class="click" ${e.act}><td class="mono">${n+1}</td><td>${dfmt(e.date)}</td><td>${e.part}</td><td class="num">${e.dr?money(e.dr):""}</td><td class="num">${e.cr?money(e.cr):""}</td><td class="num">${money(bal)}</td></tr>`}).join("")}
+    </tbody><tfoot><tr><td colspan="3">Total</td><td class="num">${money(ent.reduce((a,e)=>a+e.dr,0))}</td><td class="num">${money(ent.reduce((a,e)=>a+e.cr,0))}</td><td class="num">${money(bal)}</td></tr></tfoot></table></div>`},
   ledger(){const c=client(S.ui.subReport.id);const f=rf("due",{from:"2026-04-01",to:TODAY});const ob=clientDue(c,addDays(f.from,-1));
     const ent=[...S.invoices.filter(i=>i.clientId===c.id&&i.status!=="Cancelled"&&i.date>=f.from&&i.date<=f.to).map(i=>({date:i.date,part:`Sale invoice ${i.no}`,dr:calc(i).grand,cr:0,act:`data-act="openInvoice" data-id="${i.id}"`})),...S.receipts.filter(r=>r.clientId===c.id&&r.status!=="Cancelled"&&r.date>=f.from&&r.date<=f.to).map(r=>({date:r.date,part:`Receipt ${r.recId} · ${r.mode}`,dr:0,cr:r.amount,act:`data-act="openReceipt" data-id="${r.id}"`}))].sort((a,b)=>a.date.localeCompare(b.date));
     let bal=ob;
-    return reportHead("Detailed Account Summary",esc(c.name)+" · "+c.code,`<button class="btn sm ghost" data-act="backReport">← Due summary</button><button class="btn sm" data-act="sendStatement" data-id="${c.id}">${ic("send")}Send statement</button>`)+`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Particulars</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr></thead><tbody>
-    <tr><td>${dfmt(f.from)}</td><td>Opening balance</td><td class="num"></td><td class="num"></td><td class="num">${money(ob)}</td></tr>
-    ${ent.map(e=>{bal=r2(bal+e.dr-e.cr);return `<tr class="click" ${e.act}><td>${dfmt(e.date)}</td><td>${e.part}</td><td class="num">${e.dr?money(e.dr):""}</td><td class="num">${e.cr?money(e.cr):""}</td><td class="num">${money(bal)}</td></tr>`}).join("")}
-    </tbody><tfoot><tr><td colspan="4">Net amount due</td><td class="num">${money(bal)}</td></tr></tfoot></table></div>`},
+    return reportHead("Detailed Account Summary",esc(c.name)+" · "+c.code,`<button class="btn sm ghost" data-act="backReport">← Due summary</button><button class="btn sm" data-act="sendStatement" data-id="${c.id}">${ic("send")}Send statement</button>`)+`<div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Date</th><th>Particulars</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr></thead><tbody>
+    <tr><td></td><td>${dfmt(f.from)}</td><td>Opening balance</td><td class="num"></td><td class="num"></td><td class="num">${money(ob)}</td></tr>
+    ${ent.map((e,n)=>{bal=r2(bal+e.dr-e.cr);return `<tr class="click" ${e.act}><td class="mono">${n+1}</td><td>${dfmt(e.date)}</td><td>${e.part}</td><td class="num">${e.dr?money(e.dr):""}</td><td class="num">${e.cr?money(e.cr):""}</td><td class="num">${money(bal)}</td></tr>`}).join("")}
+    </tbody><tfoot><tr><td colspan="3">Total · net amount due</td><td class="num">${money(ent.reduce((a,e)=>a+e.dr,0))}</td><td class="num">${money(ent.reduce((a,e)=>a+e.cr,0))}</td><td class="num">${money(bal)}</td></tr></tfoot></table></div>`},
   decl(){const f=rf("decl",{from:"2026-04-01",to:TODAY,loc:""});const rows=S.declarations.filter(d=>d.date>=f.from&&d.date<=f.to&&(!f.loc||d.to===f.loc||d.from===f.loc));
-    return reportHead("Day-wise Declaration Summary",`${rows.length} declarations`)+`<div class="toolbar">${dateF("decl",f)}<div class="field"><label for="rlL">Location</label><select id="rlL" class="input" data-filter="r_decl.loc"><option value="">All</option>${LOCATIONS.map(l=>`<option ${f.loc===l?"selected":""}>${l}</option>`).join("")}</select></div></div>
-    <div class="table-wrap"><table><thead><tr><th>Declaration No.</th><th>Date</th><th>From</th><th>To</th><th>Consignee</th><th>Purpose</th><th>Transport</th><th class="num">Total value</th><th>FE name</th></tr></thead><tbody>${rows.map(d=>`<tr class="click" data-act="openDoc" data-kind="declaration" data-id="${d.id}"><td class="mono">${d.no}</td><td>${dfmt(d.date)}</td><td>${d.from}</td><td>${d.to}</td><td>${esc(d.consignee?client(d.consignee).name:"—")}</td><td>${d.purpose}</td><td>${esc(d.transport)}</td><td class="num">${money(d.lines.reduce((a,l)=>a+l.qty*prod(l.pid).avgRate,0))}</td><td>${esc(d.fe)}</td></tr>`).join("")}</tbody></table>${rows.length?"":'<div class="empty"><strong>No declarations in this range</strong></div>'}</div>`},
-  itemsale(){const f=rf("itemsale",{from:"2026-04-01",to:TODAY,loc:""});const rows=[];S.invoices.filter(i=>i.status!=="Cancelled"&&i.date>=f.from&&i.date<=f.to).forEach(i=>{const c=calc(i);c.rows.forEach(r=>rows.push({i,r,c,cl:client(i.clientId)}))});
+    return reportHead("Periodic Declaration Summary",`${rows.length} declarations`)+`<div class="toolbar">${dateF("decl",f)}<div class="field"><label for="rlL">Location</label><select id="rlL" class="input" data-filter="r_decl.loc"><option value="">All</option>${LOCATIONS.map(l=>`<option ${f.loc===l?"selected":""}>${l}</option>`).join("")}</select></div></div>
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Declaration No.</th><th>Date</th><th>From</th><th>To</th><th>Consignee</th><th>Purpose</th><th>Transport</th><th class="num">Qty</th><th class="num">Amount</th><th>Representative</th></tr></thead><tbody>${rows.map((d,n)=>`<tr class="click" data-act="openDoc" data-kind="declaration" data-id="${d.id}"><td class="mono">${n+1}</td><td class="mono">${d.no}</td><td>${dfmt(d.date)}</td><td>${d.from}</td><td>${d.to}</td><td>${esc(d.consignee?client(d.consignee).name:"—")}</td><td>${d.purpose}</td><td>${esc(d.transport)}</td><td class="num">${qtyf(d.lines.reduce((a,l)=>a+(+l.qty),0))}</td><td class="num">${money(declAmt(d))}</td><td>${esc(d.fe)}</td></tr>`).join("")}</tbody>${rows.length?`<tfoot><tr><td colspan="8">Total</td><td class="num">${qtyf(rows.reduce((a,d)=>a+d.lines.reduce((b,l)=>b+(+l.qty),0),0))}</td><td class="num">${money(rows.reduce((a,d)=>a+declAmt(d),0))}</td><td></td></tr></tfoot>`:""}</table>${rows.length?"":'<div class="empty"><strong>No declarations in this range</strong></div>'}</div>`},
+  itemsale(){const f=rf("itemsale",{from:"2026-04-01",to:TODAY,loc:""});const rows=[];S.invoices.filter(i=>i.status!=="Cancelled"&&i.date>=f.from&&i.date<=f.to).forEach(i=>{const c=calc(i);c.rows.forEach(r=>rows.push({i,r,c,cl:client(i.clientId)}))});const T={t:0,c:0,s:0,i:0,a:0};
     return reportHead("Item-wise Sale Summary",`${rows.length} lines`)+`<div class="toolbar">${dateF("itemsale",f)}</div>
-    <div class="table-wrap"><table><thead><tr><th>GSTIN</th><th>Invoice No.</th><th>Date</th><th>Client name / location</th><th>Item description</th><th>HSN</th><th class="num">Basic</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Amount</th></tr></thead><tbody>${rows.map(({i,r,c,cl})=>`<tr class="click" data-act="openInvoice" data-id="${i.id}"><td class="mono">${esc(cl.gstin)}</td><td class="mono">${i.no}</td><td>${dfmt(i.date)}</td><td>${esc(cl.name)}<span class="sub-line">${esc(cl.location)}</span></td><td>${esc(r.p.desc)}</td><td class="mono">${r.p.hsn}</td><td class="num">${money(r.net)}</td><td class="num">${money(c.intra?r.gst/2:0)}</td><td class="num">${money(c.intra?r.gst/2:0)}</td><td class="num">${money(c.intra?0:r.gst)}</td><td class="num">${money(r.amount)}</td></tr>`).join("")}</tbody></table></div>`},
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Inv. No.</th><th>Date</th><th>Client name</th><th>GSTIN</th><th>Item description</th><th>HSN</th><th class="num">Taxable value</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th><th class="num">Amount</th></tr></thead><tbody>${rows.map(({i,r,c,cl},n)=>{const tx=split(r.gst,c.intra);T.t+=r.net;T.c+=tx.c;T.s+=tx.s;T.i+=tx.i;T.a+=r.amount;return `<tr class="click" data-act="openInvoice" data-id="${i.id}"><td class="mono">${n+1}</td><td class="mono">${i.no}</td><td>${dfmt(i.date)}</td><td>${esc(cl.name)}</td><td class="mono">${esc(cl.gstin)}</td><td>${esc(r.p.desc)}</td><td class="mono">${r.p.hsn}</td><td class="num">${money(r.net)}</td><td class="num">${money(tx.c)}</td><td class="num">${money(tx.s)}</td><td class="num">${money(tx.i)}</td><td class="num">${money(r.amount)}</td></tr>`}).join("")}</tbody>${rows.length?`<tfoot><tr><td colspan="7">Total</td><td class="num">${money(T.t)}</td><td class="num">${money(T.c)}</td><td class="num">${money(T.s)}</td><td class="num">${money(T.i)}</td><td class="num">${money(T.a)}</td></tr></tfoot>`:""}</table></div>`},
   itempur(){const f=rf("itempur",{pid:"p1",from:"2026-04-01",to:TODAY});const p=prod(f.pid);const rows=[];S.purchases.filter(x=>x.date>=f.from&&x.date<=f.to).forEach(x=>x.lines.filter(l=>l.pid===f.pid).forEach(l=>rows.push({x,l})));
     return reportHead("Item-wise Purchase Rates",`Current average rate ${money(p.avgRate)}`)+`<div class="toolbar"><div class="field grow"><label for="riP">Part No.</label><select id="riP" class="input" data-filter="r_itempur.pid">${S.products.map(q=>`<option value="${q.id}" ${q.id===f.pid?"selected":""}>${q.partNo} · ${esc(q.desc)}</option>`).join("")}</select></div>${dateF("itempur",f)}</div>
-    <div class="table-wrap"><table><thead><tr><th>Invoice No.</th><th>Date</th><th>Supplier name</th><th class="num">Quantity</th><th class="num">Rate</th><th class="num">Total</th></tr></thead><tbody>${rows.map(({x,l})=>`<tr class="click" data-act="openDoc" data-kind="purchase" data-id="${x.id}"><td class="mono">${esc(x.supInvNo)}</td><td>${dfmt(x.supInvDate)}</td><td>${esc(supplier(x.supplierId).name)}</td><td class="num">${l.qty}</td><td class="num">${money(l.rate)}</td><td class="num">${money(l.qty*l.rate)}</td></tr>`).join("")}</tbody></table>${rows.length?"":'<div class="empty"><strong>No purchases of this part in the range</strong></div>'}</div>`}
+    <div class="table-wrap"><table><thead><tr><th>S. No.</th><th>Invoice No.</th><th>Date</th><th>Supplier name</th><th class="num">Quantity</th><th class="num">Rate</th><th class="num">Total</th></tr></thead><tbody>${rows.map(({x,l},n)=>`<tr class="click" data-act="openDoc" data-kind="purchase" data-id="${x.id}"><td class="mono">${n+1}</td><td class="mono">${esc(x.supInvNo)}</td><td>${dfmt(x.supInvDate)}</td><td>${esc(supplier(x.supplierId).name)}</td><td class="num">${l.qty}</td><td class="num">${money(l.rate)}</td><td class="num">${money(l.qty*l.rate)}</td></tr>`).join("")}</tbody>${rows.length?`<tfoot><tr><td colspan="4">Total</td><td class="num">${qtyf(rows.reduce((a,x)=>a+(+x.l.qty),0))}</td><td></td><td class="num">${money(rows.reduce((a,x)=>a+x.l.qty*x.l.rate,0))}</td></tr></tfoot>`:""}</table>${rows.length?"":'<div class="empty"><strong>No purchases of this part in the range</strong></div>'}</div>`}
 };
 
 /* ---------- Messaging & Audit ---------- */
@@ -1372,6 +1464,33 @@ function bindAdder(){
 }
 function afterRender(){bindAdder()}
 
+/* ---------- Report export: Excel (CSV opens in Excel) and PDF ---------- */
+function tableData(tbl){const txt=c=>{const x=c.cloneNode(true);x.querySelectorAll(".sub-line").forEach(e=>e.prepend(" · "));return x.textContent.replace(/\s+/g," ").trim()};
+  const rows=[...tbl.querySelectorAll("tr")].map(tr=>{const out=[];[...tr.children].forEach(c=>{out.push(txt(c));for(let k=1;k<(+c.getAttribute("colspan")||1);k++)out.push("")});return out});
+  return{head:rows[0],body:rows.slice(1)}}
+function buildPdf(title,head,body){
+  const W=842,H=595,M=28;let fs=7.5,lh=11;const asc=s=>String(s).replace(/₹/g,"Rs.").replace(/[−–—]/g,"-").replace(/·/g,"-").replace(/[^\x20-\x7E]/g,"");
+  const pe=s=>asc(s).replace(/[\\()]/g,"\\$&");const tw=s=>asc(s).length*fs*0.6;
+  const n=head.length;const want=head.map((h,c)=>Math.min(170,Math.max(tw(h),...body.map(r=>tw(r[c]||"")))+8));let sum=want.reduce((a,b)=>a+b,0);const k0=Math.max(5.5/7.5,Math.min(1,(W-2*M)/sum));fs*=k0;lh*=Math.max(.85,k0);sum*=k0;const cw=want.map(w=>w*k0*(W-2*M)/sum);
+  const fit=(s,w)=>{s=asc(s);const max=Math.floor((w-6)/(fs*0.6));return s.length>max?s.slice(0,Math.max(1,max-1))+".":s};
+  const num=s=>/^-?(Rs\.)?-?[\d,]+(\.\d+)?$/.test(asc(s).replace(/\s/g,""));
+  const pages=[];let ops=[],y;const newPage=()=>{ops=[];pages.push(ops);y=H-M;ops.push(`BT /F2 11 Tf ${M} ${y-11} Td (${pe(COMPANY.name+" - "+title)}) Tj ET`);y-=28;row(head,true)};
+  const row=(r,bold)=>{if(y-lh<M){newPage()}let x=M;if(bold)ops.push(`0.92 g ${M} ${y-lh+2} ${W-2*M} ${lh} re f 0 g`);r.forEach((v,c)=>{const t=fit(v,cw[c]);const tx=num(v)&&!bold?x+cw[c]-3-tw(t):x+3;ops.push(`BT /${bold?"F2":"F1"} ${fs} Tf ${tx.toFixed(1)} ${(y-lh+4.5).toFixed(1)} Td (${pe(t)}) Tj ET`);x+=cw[c]});ops.push(`0.8 G ${M} ${(y-lh+1).toFixed(1)} m ${W-M} ${(y-lh+1).toFixed(1)} l S 0 G`);y-=lh};
+  newPage();body.forEach((r,k)=>row(r,k===body.length-1&&/^(Total|Net)/.test(r[0]||"")));
+  const objs=["<< /Type /Catalog /Pages 2 0 R >>",null,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>","<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"];const kids=[];
+  pages.forEach((o,k)=>{o.push(`BT /F1 7 Tf ${W-M-60} ${M-14} Td (Page ${k+1} of ${pages.length}) Tj ET`);const c=o.join("\n");objs.push(`<< /Length ${c.length} >>\nstream\n${c}\nendstream`);objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${objs.length} 0 R >>`);kids.push(objs.length+" 0 R")});
+  objs[1]=`<< /Type /Pages /Kids [${kids.join(" ")}] /Count ${kids.length} >>`;
+  let out="%PDF-1.4\n";const off=[];objs.forEach((o,k)=>{off.push(out.length);out+=`${k+1} 0 obj\n${o}\nendobj\n`});const xr=out.length;
+  out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+off.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;return out}
+async function exportReport(fmt,el){
+  const panel=el.closest(".panel");const tbl=panel&&panel.querySelector("table");if(!tbl){toast("Nothing to export.");return}
+  const title=panel.querySelector(".panel-head h2")?.textContent||"Report";const {head,body}=tableData(tbl);
+  const filename=title.replace(/[^\w]+/g,"_")+(fmt==="xls"?".csv":".pdf");
+  const data=fmt==="xls"?"﻿"+[head,...body].map(r=>r.map(v=>/^[−-]?₹[\d,]+(\.\d+)?$/.test(v)?v.replace(/[₹,]/g,"").replace("−","-"):`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n"):buildPdf(title,head,body);
+  let dl=null;try{dl=await window.claude?.use?.("downloads")}catch(e){}
+  if(dl){try{await dl.save({filename,data});toast(`${title} saved`)}catch(e){if(e&&e.code!=="declined")toast("Couldn't save the file here.")}return}
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:fmt==="xls"?"text/csv":"application/pdf"}));a.download=filename;document.body.appendChild(a);a.click();a.remove();toast(`${title} exported`)}catch(e){toast("Export works in the full app.")}
+}
 /* ---------- Event delegation ---------- */
 const A={
   nav:(el,e)=>{e.preventDefault();S.ui.subReport=null;go(el.dataset.route)},
@@ -1415,6 +1534,7 @@ const A={
   addAddition:()=>{S.ui.editor.doc.additions.push({label:"Freight",amt:0});render()},
   openPayment:el=>paymentDrawer(el.dataset.id),
   payType:el=>{const p=readPay();p.payType=el.dataset.v;p.head="";p.paidTo="";document.querySelectorAll("#payForm .seg button").forEach(b=>b.classList.toggle("on",b.dataset.v===p.payType));$("#payFields").innerHTML=payFields(p)},
+  navReport:(el,e)=>{e.preventDefault();S.ui.report=el.dataset.id;S.ui.subReport=null;go("reports")},
   savePayment:()=>savePayment(),
   newHead:()=>{readPay();newHeadModal()},
   addHead:()=>{const n=$("#nhName").value.trim(),m=$("#nhMain").value;if(!n){$("#nhName").classList.add("err");return}if(S.expenseHeads.some(h=>h.name.toLowerCase()===n.toLowerCase()&&h.main===m)){toast("That expense head already exists.");return}S.expenseHeads.push({name:n,main:m});audit("Cash Transfer","Create","Expense head","",""," "+n+" ("+m+")");$("#ov2").remove();const p=S.ui.payDraft;if(p){p.payType=m;p.head=n;document.querySelectorAll("#payForm .seg button").forEach(b=>b.classList.toggle("on",b.dataset.v===m));$("#payFields").innerHTML=payFields(p)}toast(`${n} added`)},
@@ -1427,12 +1547,16 @@ const A={
   clientRates:el=>{S.ui.subReport={kind:"clientRates",id:el.dataset.id};render()},
   ledger:el=>{S.ui.subReport={kind:"ledger",id:el.dataset.id};render()},
   backReport:()=>{S.ui.subReport=null;render()},
-  export:()=>toast("Export to Excel works in the full app."),
+  export:el=>exportReport(el.dataset.fmt,el),
+  supLedger:el=>{S.ui.subReport={kind:"supLedger",id:el.dataset.id};render()},
   sendStatement:el=>{const c=client(el.dataset.id);sendModal({type:"Statement of account",doc:c.code,party:c,amount:clientDue(c)})},
   msgTab:el=>{S.ui.msgTab=el.dataset.v;render()},
   resend:el=>{const m=S.messages[+el.dataset.i];m.status="Queued";m.reason="";audit("Messaging","Send",m.doc,"","","Resent on "+m.channel);render();toast("Message queued again")},
   saveAuto:()=>toast("Reminder settings saved"),
   ftab:el=>{const f=S.ui.filters[el.dataset.key]||(S.ui.filters[el.dataset.key]={q:""});f.st=el.dataset.v;render()},
+  dashPeriod:el=>{S.ui.dashPeriod=el.dataset.v;render()},
+  reportFromDash:el=>{S.ui.report=el.dataset.id;S.ui.subReport=null;go("reports")},
+  ledgerFromDash:el=>{S.ui.report="due";S.ui.subReport={kind:"ledger",id:el.dataset.id};go("reports")},
   palette:()=>openPalette(),palRun:el=>runPal(+el.dataset.i)
 };
 document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(!el||el.disabled)return;const fn=A[el.dataset.act];if(fn)fn(el,e)});
@@ -1442,7 +1566,7 @@ document.addEventListener("input",e=>{const t=e.target;
   if(t.dataset.filter){const[key,prop]=t.dataset.filter.split(".");S.ui.filters[key]=S.ui.filters[key]||{};S.ui.filters[key][prop]=t.type==="checkbox"?t.checked:t.value;const id=t.id;const pos=t.selectionStart;
     clearTimeout(filterTimer);filterTimer=setTimeout(()=>{render();const n=id&&document.getElementById(id);if(n){n.focus();try{if(pos!=null&&n.setSelectionRange)n.setSelectionRange(pos,pos)}catch(_){}}},t.tagName==="INPUT"&&t.type!=="date"&&t.type!=="checkbox"?160:0);return}
   const ed=S.ui.editor;
-  if(ed&&t.dataset.line!=null){const l=ed.doc.lines[+t.dataset.line];const f=t.dataset.lf;l[f]=f==="dt"?t.value:(t.value===""?"":+t.value||0);softRefresh(t);return}
+  if(ed&&t.dataset.line!=null){const l=ed.doc.lines[+t.dataset.line];const f=t.dataset.lf;l[f]=["dt","batch","exp"].includes(f)?t.value:(t.value===""?"":+t.value||0);if(f==="batch"||f==="exp")return;softRefresh(t);return}
   if(ed&&t.dataset.add!=null){const a=ed.doc.additions[+t.dataset.add];a[t.dataset.af]=t.dataset.af==="amt"?(+t.value||0):t.value;softRefresh(t);return}
   if(ed&&t.dataset.doc){const k=t.dataset.doc;ed.doc[k]=["billDisc","transport"].includes(k)?(+t.value||0):t.value;
     if(k==="clientId"){const c=client(t.value);ed.doc.addrId=c?(c.addresses.find(a=>a.def)||c.addresses[0]).id:"";if(c&&!ed.doc.fe)ed.doc.fe=c.fe||"";render();return}
