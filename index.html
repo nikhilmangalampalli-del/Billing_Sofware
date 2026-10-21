@@ -432,7 +432,23 @@ td.mono,td .mono{white-space:nowrap}
 .scroll-list{max-height:320px;overflow-y:auto}
 .list-item.click{cursor:pointer}.list-item.click:hover{background:var(--surface-2)}
 .kpi.click{cursor:pointer;transition:border-color .15s}.kpi.click:hover{border-color:var(--line-strong)}
-.mini{display:flex;flex-direction:column;gap:2px}.mini .k{font-size:12px;color:var(--muted)}.mini .v{font-family:var(--f-mono);font-size:18px;font-weight:600}.mini .v.warn{color:var(--warn)}
+.mstat{display:flex;flex-direction:column;gap:2px}.mstat .k{font-size:12px;color:var(--muted)}.mstat .v{font-family:var(--f-mono);font-size:18px;font-weight:600}.mstat .v.warn{color:var(--warn)}
+/* Collapsible sidebar and report sub menu */
+.app{transition:grid-template-columns .18s}
+.side .brand{position:relative}.side-toggle{margin-left:auto;color:var(--side-fg);width:28px;height:28px}.side-toggle svg{transition:transform .18s}
+.side-toggle:hover{background:var(--side-hover);color:#fff}
+.nav-row{display:flex;align-items:center;gap:2px}.nav-row a{flex:1;min-width:0}
+.nav-caret{width:28px;height:28px;color:var(--side-fg);flex:none}.nav-caret:hover{background:var(--side-hover);color:#fff}.nav-caret svg{transition:transform .18s;transform:rotate(-90deg)}.nav-caret.open svg{transform:none}
+.nav-sub{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px}
+.app.mini{grid-template-columns:68px minmax(0,1fr)}
+.app.mini .brand{padding:16px 0;justify-content:center;flex-direction:column;gap:6px;height:auto}
+.app.mini .brand-t,.app.mini .nl,.app.mini .nav-caret,.app.mini .nav-sub,.app.mini .foot-note,.app.mini .user>div:not(.avatar){display:none}
+.app.mini .side-toggle{margin:0}.app.mini .side-toggle svg{transform:rotate(180deg)}
+.app.mini .nav{padding:10px 8px}.app.mini .nav a{justify-content:center;padding:9px 0}
+.app.mini .nav-group{font-size:0;padding:10px 0 4px;margin:0 10px;border-top:1px solid var(--side-line)}.app.mini .nav-group:first-child{border-top:0}
+.app.mini .nav a .count{position:absolute;top:2px;right:6px;margin:0;padding:0 5px;font-size:10px}
+.app.mini .side-foot{padding:12px 8px}.app.mini .user{flex-direction:column;gap:8px;align-items:center}
+@media (max-width:960px){.side-toggle{display:none}}
 </style>
 </head>
 <body>
@@ -467,7 +483,7 @@ const TODAY="2026-10-08";
 let uid=1000;const nid=p=>p+(++uid);
 const S={
   session:null,
-  ui:{route:"dashboard",editor:null,report:"sales",filters:{},sideOpen:false},
+  ui:{route:"dashboard",editor:null,report:"sales",filters:{},sideOpen:false,repOpen:true,sideMini:(()=>{try{return localStorage.getItem("bd.sideMini")==="1"}catch(e){return false}})()},
   suppliers:[
     {id:"s1",code:"SP-0001",ob:0,name:"Precision Imaging Parts Pvt Ltd",gstin:"27AAFCP4567K1Z2",state:"Maharashtra",stateCode:"27",mobile:"9820011122",email:"accounts@precision-parts.example"},
     {id:"s2",code:"SP-0002",ob:12000,name:"Deccan Medtech Traders",gstin:"36AAKFD8899L1Z9",state:"Telangana",stateCode:"36",mobile:"9849033344",email:"sales@deccanmedtech.example"}
@@ -617,6 +633,7 @@ const ICONS={
   alert:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/>',
   edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  chevL:'<path d="M15 5l-7 7 7 7"/>',chevD:'<path d="M6 9l6 6 6-6"/>',
   cash:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>'
 };
 const ic=(n,cls="")=>`<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||""}</svg>`;
@@ -667,11 +684,12 @@ function render(){
   const r=S.ui.route;const ed=S.ui.editor;
   const title=ed?editorTitle(ed):TITLES[r]||"";
   const counts={invoices:S.invoices.filter(i=>["Overdue"].includes(invState(i))).length,messages:S.messages.filter(m=>m.status==="Failed").length};
-  root.innerHTML=`<div class="app">
+  root.innerHTML=`<div class="app ${S.ui.sideMini&&innerWidth>960?"mini":""}">
     <aside class="side ${S.ui.sideOpen?"open":""}" aria-label="Modules">
-      <div class="brand"><div class="logo">₹B</div>Billing Desk</div>
-      <nav class="nav">${NAV.map(([g,items])=>`<div class="nav-group">${g}</div>`+items.map(([k,l,i])=>`<a href="#${k}" data-act="nav" data-route="${k}" class="${r===k?"on":""}">${ic(i)}${l}${counts[k]?`<span class="count crit">${counts[k]}</span>`:""}</a>`+(k==="reports"?REPORTS.map(([id,n])=>`<a href="#reports" class="sub ${r==="reports"&&S.ui.report===id?"on":""}" data-act="navReport" data-id="${id}">${n}</a>`).join(""):"")).join("")).join("")}</nav>
-      <div class="side-foot"><div class="user"><div class="avatar">${esc(S.session.designation.slice(0,2).toUpperCase())}</div><div style="min-width:0"><b>${esc(S.session.designation)}</b>${esc(S.session.location)} · ${esc(S.session.fy)}</div><button class="icon-btn" data-act="logout" aria-label="Log out" title="Log out">${ic("logout")}</button></div><div>Preview with sample data. Nothing is saved or sent.</div></div>
+      <div class="brand"><div class="logo">₹B</div><span class="brand-t">Billing Desk</span><button class="icon-btn side-toggle" data-act="toggleMini" aria-label="${S.ui.sideMini?"Expand":"Collapse"} sidebar" title="${S.ui.sideMini?"Expand":"Collapse"} sidebar">${ic("chevL")}</button></div>
+      <nav class="nav">${NAV.map(([g,items])=>`<div class="nav-group">${g}</div>`+items.map(([k,l,i])=>k==="reports"?`<div class="nav-row"><a href="#${k}" data-act="nav" data-route="${k}" class="${r===k?"on":""}" title="${l}">${ic(i)}<span class="nl">${l}</span></a><button class="icon-btn nav-caret ${S.ui.repOpen?"open":""}" data-act="toggleRep" aria-expanded="${S.ui.repOpen}" aria-label="${S.ui.repOpen?"Hide":"Show"} report list">${ic("chevD")}</button></div>${S.ui.repOpen?`<div class="nav-sub">${REPORTS.map(([id,n])=>`<a href="#reports" class="sub ${r==="reports"&&S.ui.report===id?"on":""}" data-act="navReport" data-id="${id}">${n}</a>`).join("")}</div>`:""}`
+    :`<a href="#${k}" data-act="nav" data-route="${k}" class="${r===k?"on":""}" title="${l}">${ic(i)}<span class="nl">${l}</span>${counts[k]?`<span class="count crit">${counts[k]}</span>`:""}</a>`).join("")).join("")}</nav>
+      <div class="side-foot"><div class="user" title="${esc(S.session.designation)} · ${esc(S.session.location)}"><div class="avatar">${esc(S.session.designation.slice(0,2).toUpperCase())}</div><div style="min-width:0"><b>${esc(S.session.designation)}</b>${esc(S.session.location)} · ${esc(S.session.fy)}</div><button class="icon-btn" data-act="logout" aria-label="Log out" title="Log out">${ic("logout")}</button></div><div class="foot-note">Preview with sample data. Nothing is saved or sent.</div></div>
     </aside>
     ${S.ui.sideOpen?'<div class="scrim" data-act="closeSide"></div>':""}
     <div class="main">
@@ -797,7 +815,7 @@ VIEWS.dashboard=()=>{
       ${recent.map(i=>`<tr class="click" data-act="openInvoice" data-id="${i.id}"><td><span class="mono">${i.no}</span><span class="sub-line">${dfmt(i.date)}</span></td><td>${partyCell(client(i.clientId).name)}</td><td>${i.type}</td><td class="num">${money(calc(i).grand)}</td><td class="num">${balanceOf(i)?money(balanceOf(i)):"—"}</td><td>${chipFor(invState(i))}</td></tr>`).join("")}
       </tbody></table></div></div>
     <div style="display:flex;flex-direction:column;gap:20px">
-      <div class="panel"><div class="panel-head"><h2>Pending quotations</h2><button class="btn sm ghost" data-act="nav" data-route="quotations">View all ${ic("arrow")}</button></div><div class="panel-body" style="display:flex;gap:24px;flex-wrap:wrap"><div class="mini"><span class="k">Waiting on clients</span><span class="v">${pendingQ.length}</span></div><div class="mini"><span class="k">Value</span><span class="v">${money0(pendingQ.reduce((a,q)=>a+calc(q).grand,0))}</span></div><div class="mini"><span class="k">Expiring in 7 days</span><span class="v ${expiring.length?"warn":""}">${expiring.length}</span></div></div></div>
+      <div class="panel"><div class="panel-head"><h2>Pending quotations</h2><button class="btn sm ghost" data-act="nav" data-route="quotations">View all ${ic("arrow")}</button></div><div class="panel-body" style="display:flex;gap:24px;flex-wrap:wrap"><div class="mstat"><span class="k">Waiting on clients</span><span class="v">${pendingQ.length}</span></div><div class="mstat"><span class="k">Value</span><span class="v">${money0(pendingQ.reduce((a,q)=>a+calc(q).grand,0))}</span></div><div class="mstat"><span class="k">Expiring in 7 days</span><span class="v ${expiring.length?"warn":""}">${expiring.length}</span></div></div></div>
       <div class="panel"><div class="panel-head"><h2>Quick actions</h2></div><div class="quick">
         <button data-act="openReceipt">${ic("in")}<span>Generate receipt</span><small>Record a client payment</small></button>
         <button data-act="openPayment">${ic("out")}<span>Generate payment</span><small>Pay a supplier or expense</small></button>
@@ -1324,8 +1342,7 @@ const REPORTS=[
 VIEWS.reports=()=>{
   const k=S.ui.report;const R=REPORT_VIEWS[S.ui.subReport?S.ui.subReport.kind:k]();
   return `<div class="page-head"><div><h1>Reports</h1><p>Filter, review and export. Click a row to open what's behind it.</p></div></div>
-  <div class="report-layout"><div class="panel report-nav" role="tablist">${REPORTS.map(([id,n,p])=>`<button class="${k===id&&!S.ui.subReport?"on":""}" data-act="report" data-id="${id}" role="tab"><span class="rn">${ic({sales:"invoice",stock:"box",purch:"truck",due:"users",decl:"swap",itemsale:"chart",itempur:"quote",supdue:"truck"}[id])}<span>${n}<small>${p}</small></span></span></button>`).join("")}</div>
-  <div class="panel">${R}</div></div>`;
+  <div class="panel">${R}</div>`;
 };
 const rf=(k,def)=>S.ui.filters["r_"+k]||(S.ui.filters["r_"+k]=def);
 const dateF=(k,f)=>`<div class="field"><label for="${k}F">Start date</label><input id="${k}F" type="date" class="input" data-filter="r_${k}.from" value="${f.from}"></div><div class="field"><label for="${k}T">End date</label><input id="${k}T" type="date" class="input" data-filter="r_${k}.to" value="${f.to}"></div>`;
@@ -1554,6 +1571,8 @@ const A={
   resend:el=>{const m=S.messages[+el.dataset.i];m.status="Queued";m.reason="";audit("Messaging","Send",m.doc,"","","Resent on "+m.channel);render();toast("Message queued again")},
   saveAuto:()=>toast("Reminder settings saved"),
   ftab:el=>{const f=S.ui.filters[el.dataset.key]||(S.ui.filters[el.dataset.key]={q:""});f.st=el.dataset.v;render()},
+  toggleMini:()=>{S.ui.sideMini=!S.ui.sideMini;try{localStorage.setItem("bd.sideMini",S.ui.sideMini?"1":"0")}catch(e){}render()},
+  toggleRep:()=>{S.ui.repOpen=!S.ui.repOpen;render()},
   dashPeriod:el=>{S.ui.dashPeriod=el.dataset.v;render()},
   reportFromDash:el=>{S.ui.report=el.dataset.id;S.ui.subReport=null;go("reports")},
   ledgerFromDash:el=>{S.ui.report="due";S.ui.subReport={kind:"ledger",id:el.dataset.id};go("reports")},
