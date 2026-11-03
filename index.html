@@ -628,22 +628,6 @@ a.kpi,a.kpi:hover{text-decoration:none;color:inherit}a.kpi .label,a.kpi .foot{te
 .plain-fieldset{border:0;margin:0;padding:0;min-width:0}
 .plain-fieldset:disabled .btn,.plain-fieldset:disabled .input{opacity:.55;cursor:not-allowed}
 
-/* phones (under 600 px): each list row is a card; the page never scrolls sideways (design 2.4, 3 Nov 2026) */
-@media (max-width:600px){
- table.cardable thead,table.cardable tfoot{display:none}
- table.cardable,table.cardable tbody{display:block;width:100%}
- table.cardable tr{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 14px;border-bottom:1px solid var(--line)}
- table.cardable td{display:block;border:0;padding:0;text-align:left;white-space:normal;min-width:0;overflow-wrap:anywhere}
- table.cardable td.faint:first-child{display:none}
- table.cardable td:nth-child(n+6){display:none}
- table.cardable td:nth-child(n+6):has(.chip),table.cardable td.num:last-child,table.cardable td[data-label*="total" i],table.cardable td[data-label*="amount" i],table.cardable td[data-label*="balance" i]{display:block}
- table.cardable tbody tr td{background:transparent!important}
- table.cardable td.num{text-align:right}
- table.cardable td::before{content:attr(data-label);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
- .input,select.input,textarea.input{font-size:16px}
- .btn{min-height:44px}
-}
-
 /* Document page: Changes card (3 Nov 2026) */
 .chg .ph svg{width:16px;height:16px;color:var(--muted);flex:none}
 .chg .ph .chip.r{margin-left:auto}
@@ -658,6 +642,136 @@ a.kpi,a.kpi:hover{text-decoration:none;color:inherit}a.kpi .label,a.kpi .foot{te
 .tabs button svg{width:14px;height:14px;flex:none;opacity:.7}
 @media (max-width:1180px){.editor{display:flex;flex-direction:column}.editor>div{width:100%}.editor aside{display:contents}.editor aside>.chg{order:-1}.editor aside>.panel{width:100%}}
 @media (max-width:600px){.top .session{flex-wrap:nowrap}}
+
+/* Unfinished-work notification after sign-in (3 Nov 2026) */
+.toast.note{background:var(--surface);color:var(--fg);border:1px solid var(--line-strong);align-items:flex-start;max-width:380px;padding:12px 12px 12px 14px}
+.toast.note>svg{color:var(--accent);margin-top:2px}
+.toast.note .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.toast.note .sub{color:var(--muted);font-size:12.5px}
+.toast.note .note-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+.toast.note .icon-btn{width:28px;height:28px;min-width:0;min-height:0;color:var(--muted);flex:none}
+
+/* ===== Phone layout (under 600 px), design 3.4 (NIKHIL, 3 Nov 2026) ===== */
+.tabbar,.side-x,.top-logo{display:none}
+@media (max-width:600px){
+ /* app bar and tab bar */
+ .menu-btn{display:none!important}
+ .top{padding:8px 12px;min-height:52px;gap:8px;padding-top:max(8px,env(safe-area-inset-top))}
+ .top .crumb{display:none}
+ .top .top-logo{display:grid;text-decoration:none}
+ .top .branch-switch select{max-width:120px}
+ .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:50;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+ .tabbar a,.tabbar button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:58px;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:500;text-decoration:none;cursor:pointer}
+ .tabbar svg{width:22px;height:22px}
+ .tabbar .on{color:var(--accent)}
+ .tabbar .on svg{stroke-width:2.2}
+ .tabbar .dot{position:absolute;top:9px;left:calc(50% + 7px);width:8px;height:8px;border-radius:50%;background:var(--crit);border:2px solid var(--surface)}
+ .app .main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+ .toasts{top:auto;bottom:calc(72px + env(safe-area-inset-bottom));left:12px;right:12px;max-width:none}
+ /* More: the module menu fills the screen */
+ .app .side,.app.mini .side{width:100%!important;transform:translateY(100%);visibility:hidden;transition:transform .22s ease,visibility .22s;z-index:45;bottom:calc(58px + env(safe-area-inset-bottom));top:0;height:auto}
+ .app .side.open{transform:none;visibility:visible}
+ .side .side-x{display:inline-grid;margin-left:auto;color:var(--side-fg)}
+ .side .nav a,.side .nav-row a{min-height:46px}
+ .app > .scrim{display:none}
+ /* page head */
+ .content{padding:14px 12px 24px;gap:14px}
+ .page-head{gap:10px;align-items:flex-start}
+ .page-head h1{font-size:20px}
+ .page-head p{font-size:13px}
+ .page-head.list-head p{display:none}
+ .page-head .acts{width:100%;display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -12px;padding:2px 12px;width:calc(100% + 24px)}
+ .page-head .acts::-webkit-scrollbar{display:none}
+ .page-head .acts .btn{flex:none;min-height:38px;padding:0 12px;font-size:13px;border-radius:999px}
+ .page-head .acts .btn.primary{position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:40;min-height:52px;padding:0 20px;font-size:14.5px;box-shadow:0 6px 18px rgba(0,0,0,.22)}
+ .page-head .acts .seg{flex:none}
+ .content:has(.page-head .acts .btn.primary){padding-bottom:84px}
+ button.back{margin-bottom:-6px}
+ /* numbers strips scroll sideways */
+ .stats{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 12px;gap:10px;margin:0 -12px;padding:0 12px 2px;scrollbar-width:none}
+ .stats::-webkit-scrollbar{display:none}
+ .stat{flex:0 0 46%;scroll-snap-align:start;padding:10px 12px}
+ .stat:only-child{flex-basis:100%}
+ .stat .h{white-space:normal}
+ .stat .v{font-size:16px}
+ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+ .kpi{padding:12px;gap:4px}.kpi .value{font-size:17px}.kpi .label{font-size:11.5px}.kpi .foot{font-size:11px;flex-wrap:wrap}
+ .kpi-ic{display:none}
+ .seg{width:100%}.seg button{flex:1;padding:0 6px;font-size:12.5px}
+ /* list panel: tabs, then search and filters side by side */
+ .panel{border-radius:12px}
+ .ftabs{padding:10px 12px;gap:6px}
+ .toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 12px 12px}
+ .toolbar .field.grow,.toolbar>.picker,.toolbar>.hint{grid-column:1/-1}
+ .toolbar .field label{display:none}
+ .toolbar .field.grow label{display:none}
+ /* table rows become cards */
+ table.cardable thead,table.cardable tfoot{display:none}
+ table.cardable,table.cardable tbody{display:block;width:100%}
+ table.cardable tr{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:baseline;gap:3px 8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+ table.cardable tr:last-child{border-bottom:0}
+ table.cardable tr.whole{display:block;padding:0}
+ table.cardable td{display:block;border:0;padding:0;text-align:left;white-space:normal;min-width:0;overflow-wrap:anywhere;background:transparent!important;font-size:13px}
+ table.cardable td[data-role=sn],table.cardable td[data-empty]{display:none}
+ table.cardable td[data-role=title]{grid-column:1/4;grid-row:1;font-size:15px;font-weight:600;color:var(--fg)}
+ table.cardable td[data-role=title] .mono{font-weight:600}
+ table.cardable td[data-role=amount]{grid-column:4;grid-row:1;text-align:right;font-family:var(--f-mono);font-weight:600;font-size:14px;white-space:nowrap}
+ table.cardable td[data-role=id],table.cardable td[data-role=date],table.cardable td[data-role=branch]{grid-row:2;color:var(--muted);font-size:12.5px}
+ table.cardable td[data-role=id]{grid-column:1}
+ table.cardable td[data-role=date]{grid-column:2}
+ table.cardable td[data-role=branch]{grid-column:3}
+ table.cardable td[data-role=status]{grid-column:4;grid-row:2;justify-self:end}
+ table.cardable td[data-role=title]:has(+ td[data-role=amount]){grid-column:1/4}
+ table.cardable td[data-role] .sub,table.cardable td[data-role] small{display:block;font-size:12px;font-weight:400;color:var(--faint)}
+ table.cardable tr.click td[data-role=x]{display:none}
+ table.cardable tr.click td[data-role=title] .sub,table.cardable tr.click td[data-role=date] .sub,table.cardable tr.click td[data-role=title] br~*{display:none}
+ table.cardable tr.click:active{background:var(--accent-soft)}
+ /* rows that are not links show their other columns as small labelled fields */
+ table.cardable tr:not(.click){grid-template-columns:repeat(3,minmax(0,1fr))}
+ table.cardable tr:not(.click) td[data-role=title]{grid-column:1/3}
+ table.cardable tr:not(.click) td[data-role=amount]{grid-column:3}
+ table.cardable tr:not(.click) td[data-role=title]:not(:has(~ td[data-role=amount])){grid-column:1/-1}
+ table.cardable tr:not(.click) td[data-role=id],table.cardable tr:not(.click) td[data-role=date],table.cardable tr:not(.click) td[data-role=branch],table.cardable tr:not(.click) td[data-role=status],table.cardable tr:not(.click) td[data-role=x]{grid-column:auto;grid-row:auto;justify-self:stretch;margin-top:6px}
+ table.cardable tr:not(.click) td[data-role=x]::before,table.cardable tr:not(.click) td[data-role=id]::before,table.cardable tr:not(.click) td[data-role=date]::before,table.cardable tr:not(.click) td[data-role=status]::before,table.cardable tr:not(.click) td[data-role=branch]::before{content:attr(data-label);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin-bottom:2px}
+ table.cardable td[data-label=""]::before{display:none!important}
+ table.cardable td .input{width:100%}
+ table.cardable td.num{text-align:left}
+ table.cardable td[data-role=amount].num{text-align:right}
+ /* reports keep their columns: scroll sideways, first column pinned */
+ .rep-out{overflow-x:auto}
+ .rep-out table{min-width:560px}
+ .rep-out th:first-child,.rep-out td:first-child{position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:1px 0 0 var(--line)}
+ .rep-out td{white-space:nowrap}
+ /* document page: the Changes card stays first in the aside; details read as two columns */
+ .dl{grid-template-columns:minmax(0,40%) minmax(0,1fr)}
+ /* editors are full screen: no tab bar, one save bar at the bottom */
+ .app:has(.aside-acts) .tabbar{display:none}
+ .app:has(.aside-acts) .main{padding-bottom:0}
+ .aside-acts{position:fixed;left:0;right:0;bottom:0;z-index:45;flex-direction:row-reverse!important;gap:8px!important;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 16px rgba(0,0,0,.06)}
+ .aside-acts .btn{flex:1}
+ .aside-acts .btn.primary{flex:2}
+ .content:has(.aside-acts){padding-bottom:92px}
+ /* side panels open as full-screen sheets */
+ .sp,.sp.narrow,.sp.wide{width:100%!important;max-width:none;border-radius:0;inset:0}
+ .sp-h{padding:12px 14px}
+ .sp-b{padding:14px}
+ .sp-f{padding:10px 14px calc(10px + env(safe-area-inset-bottom));position:sticky;bottom:0;background:var(--surface)}
+ .sp-f .btn{flex:1}
+ /* form controls: 16 px text stops iOS zoom; 44 px targets */
+ .input,select.input,textarea.input{font-size:16px}
+ .btn{min-height:44px}
+ .tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+ .tabs button{flex:none}
+ .toast.note{max-width:none}
+ /* fixed bars must not sit inside a transformed parent, so pages fade in instead of rising */
+ .content.enter>*{animation:none}
+ .page-head .acts>.faint{display:none}
+ table.cardable td[data-role=id]{white-space:nowrap}
+ table.cardable td[data-role=id] svg{width:12px;height:12px}
+ table.cardable td:has(> .input + select),table.cardable td:has(> .input + .input){display:flex;flex-wrap:wrap;gap:4px}
+ table.cardable td:has(> .input + select)::before{flex-basis:100%}
+ table.cardable td:has(> .input + select) .input{flex:1;min-width:0}
+}
 </style></head>
 <body><div id="app"></div><div id="toasts" class="toasts" aria-live="polite"></div>
 <script>
@@ -1002,19 +1116,24 @@ const NAV=[["Overview",[["home","Dashboard","home"]]],["Masters",[["products","P
  ["Financial Transaction",[["payments","Payments","out"],["receipts","Receipts","in"]]],
  ["Insights",[["reports","Reports","chart"],["messages","Messaging","msg"],["audit","Audit Log","shield"]]],
  ["Admin",[["settings","Company Settings","gear"]]]];
-const UI={sub:{reports:true,settings:true},sideOpen:false};
+const UI={sub:{},sideOpen:false};/* sub-menus start closed (NIKHIL, 3 Nov 2026) */
 function go(h){if(location.hash==="#/"+h)render();else location.hash="#/"+h}
 window.addEventListener("hashchange",()=>{closeAllPanels();render()});
 function toast(m,err){const t=document.createElement("div");t.className="toast"+(err?" err":"");t.setAttribute("role",err?"alert":"status");t.innerHTML=ic(err?"alert":"check")+"<span></span>";t.lastChild.textContent=m;$("#toasts").append(t);if(!err)setTimeout(()=>t.remove(),4000);else t.onclick=()=>t.remove()}
+function navCur(){const r=ROUTE[0]||"home";return r==="doc"?KIND[doc(ROUTE[1])?.kind]?.list:r==="edit"?(KIND[ROUTE[1]]?.list||KIND[doc(ROUTE[1])?.kind]?.list):r==="product"?"products":r==="client"?"clients":r==="vendor"?"vendors":r==="pricelist"?"pricelists":r==="report"?"reports":r}
+/* Phone tab bar (design 3.4, 3 Nov 2026): four fixed tabs and More, which opens the full module menu */
+const TABS=[["home","Home","home"],["invoices","Sales","receipt"],["clients","Clients","users"],["products","Products","box"]];
+function tabBar(){const cur=navCur();const od=S.docs.filter(d=>overdue(d)&&inBr(d.branch)).length;const more=!TABS.some(t=>t[0]===cur);
+ return `<nav class="tabbar" aria-label="Main">${TABS.map(([k,l,i])=>`<a href="#/${k}" class="${cur===k&&!UI.sideOpen?"on":""}" ${cur===k?'aria-current="page"':""}>${ic(i)}<span>${l}</span>${k==="invoices"&&od?`<i class="dot" aria-label="${od} overdue"></i>`:""}</a>`).join("")}<button type="button" class="${more||UI.sideOpen?"on":""}" data-act="${UI.sideOpen?"closeSide":"openSide"}" aria-expanded="${UI.sideOpen}">${ic("menu")}<span>More</span></button></nav>`}
 function sideNav(){const r=ROUTE[0]||"home";const br=sess().branch;const incoming=S.docs.filter(d=>d.kind==="DC"&&inBr(d.toBranch)&&d.transit==="In transit").length;
  const od=S.docs.filter(d=>overdue(d)&&inBr(d.branch)).length,fm=S.messages.filter(m=>m.status==="Failed"&&inBr(m.branch)).length;
  const counts={invoices:od,declarations:incoming,messages:fm};
- const cur=r==="doc"?KIND[doc(ROUTE[1])?.kind]?.list:r==="edit"?(KIND[ROUTE[1]]?.list||KIND[doc(ROUTE[1])?.kind]?.list):r==="product"?"products":r==="client"?"clients":r==="vendor"?"vendors":r==="pricelist"?"pricelists":r==="report"?"reports":r;
+ const cur=navCur();
  const subs={reports:REPORTS.map(x=>[x.id,x.name,"report/"+x.id,r==="report"&&ROUTE[1]===x.id]),settings:SETS.map(([k,l])=>[k,l,"settings/"+k,r==="settings"&&(ROUTE[1]||"company")===k])};
  const link=([k,l,i])=>{const sb=subs[k];const a=`<a href="#/${k}" class="${cur===k?"on":""}" title="${l}">${ic(i)}<span class="nl">${l}</span>${counts[k]?`<span class="count crit" aria-label="${counts[k]} need attention">${counts[k]}</span>`:""}</a>`;
   if(!sb)return a;return `<div class="nav-row">${a}<button class="icon-btn nav-caret ${UI.sub[k]?"open":""}" data-act="navSub" data-k="${k}" aria-expanded="${!!UI.sub[k]}" aria-label="${UI.sub[k]?"Hide":"Show"} ${l} list">${ic("chevD")}</button></div>${UI.sub[k]?`<div class="nav-sub">${sb.map(([id,n,h,on])=>`<a href="#/${h}" class="sub ${on?"on":""}">${esc(n)}</a>`).join("")}</div>`:""}`};
  const s=sess();
- return `<aside class="side ${UI.sideOpen?"open":""}" aria-label="Modules"><div class="brand"><div class="logo">₹B</div><span class="brand-t">Billing Desk</span></div>
+ return `<aside class="side ${UI.sideOpen?"open":""}" aria-label="Modules"><div class="brand"><div class="logo">₹B</div><span class="brand-t">Billing Desk</span><button class="icon-btn side-x" data-act="closeSide" aria-label="Close menu">${ic("x")}</button></div>
  <nav class="nav">${NAV.filter(([g])=>g!=="Admin"||isAdmin()).map(([g,items])=>`<div class="nav-group">${g}</div>`+items.map(link).join("")).join("")}</nav>
  <div class="side-foot"><div class="user" title="${esc(s.des)} · ${esc(where())}"><div class="avatar">${esc(s.des.slice(0,2).toUpperCase())}</div><div style="min-width:0"><b>${esc(s.des)}</b>${esc(where())} · ${s.fy}</div><button class="icon-btn" data-act="logout" aria-label="Log out" title="Log out">${ic("logout")}</button></div><div class="foot-note">Preview with sample data. Nothing is saved or sent.</div></div></aside>`}
 /* Open or close a sub-menu in place: re-rendering the whole sidebar would drop its hover and focus and fold the rail */
@@ -1024,11 +1143,11 @@ const isDark=()=>{const t=document.documentElement.dataset.theme;if(t)return t==
 ACTS.theme=()=>{document.documentElement.dataset.theme=isDark()?"light":"dark";try{localStorage.setItem("bd.theme",document.documentElement.dataset.theme)}catch(e){}render()};
 try{const t=localStorage.getItem("bd.theme");if(t)document.documentElement.dataset.theme=t}catch(e){}
 function shell(title,body){const s=sess();const closed=!fyOpen();
- return `<div class="app ${innerWidth>960?"mini":""}">${sideNav()}${UI.sideOpen?'<div class="scrim" data-act="closeSide"></div>':""}<div class="main"><header class="top"><button class="icon-btn menu-btn" data-act="openSide" aria-label="Open menu">${ic("menu")}</button><div class="crumb">${esc(title)}</div><div class="spacer"></div>
+ return `<div class="app ${innerWidth>960?"mini":""}">${sideNav()}${UI.sideOpen?'<div class="scrim" data-act="closeSide"></div>':""}<div class="main"><header class="top"><button class="icon-btn menu-btn" data-act="openSide" aria-label="Open menu">${ic("menu")}</button><a class="logo top-logo" href="#/home" aria-label="Dashboard">₹B</a><div class="crumb">${esc(title)}</div><div class="spacer"></div>
  <button class="search-btn" data-act="palette" aria-label="Search or jump to">${ic("search")}<span>Search or jump to…</span><span class="kbd">Ctrl K</span></button>
  <div class="session">${isOwner()?branchSwitch():`<span class="chip plain hide-sm">${ic("home")}${esc(branch(s.branch).name)}</span>`}<span class="chip accent">${esc(s.des)}</span><span class="chip plain hide-sm">FY ${s.fy}</span><button class="icon-btn" data-act="theme" aria-label="Switch light or dark">${ic(isDark()?"sun":"moon")}</button></div></header>
  <div id="idlebar"></div>${closed?`<div class="strip warn" role="status">${ic("lock")} Financial year ${s.fy} is closed. Screens are read-only.</div>`:""}${allView()&&!closed?`<div class="strip info" role="status">${ic("info")} You're viewing all branches together. It's view only: pick a branch at the top to create or change anything.</div>`:""}
- <main class="content ${render.anim?"enter":""}" id="main">${body}</main></div></div>`}
+ <main class="content ${render.anim?"enter":""}" id="main">${body}</main></div>${tabBar()}</div>`}
 /* Owner branch switch (api_list 1.5): any branch with full Admin rights, or All branches (view only) */
 const where=()=>allView()?"All branches":branch(sess().branch).name;
 function branchSwitch(){const s=sess();return `<label class="branch-switch" title="Owner: switch branch">${ic("home")}<span class="sr-only">Branch</span><select data-owner-switch aria-label="Branch"><option value="all" ${allView()?"selected":""}>All branches</option>${S.branches.filter(b=>b.status==="Active").map(b=>`<option value="${b.id}" ${!allView()&&s.branch===b.id?"selected":""}>${esc(b.name)}</option>`).join("")}</select></label>`}
@@ -1049,6 +1168,23 @@ function render(){
  if(out.mount)out.mount();
  if(UI.railHover)$(".side")?.classList.add("hold");
  renderIdle();const h=location.hash;if(h!==render.last){render.last=h;window.scrollTo(0,0)}}
+/* Phone rows (design 3.4, 3 Nov 2026). Under 600 px every table row becomes a short card. Each cell gets a role from its
+   column heading: title (party or name), id (number or code), amount (one money column), status, date, branch; the rest are
+   extra. List rows show title and amount on line one, number, date and status on line two, and drop the extras (they are on
+   the record's own page). Rows that are not links (document lines, editor lines, panels) show the extras as small labelled
+   fields. Report tables keep their columns and scroll sideways with the first column pinned. */
+const TITLE_RX=[/^client$/i,/^vendor$/i,/^party$/i,/^paid to$/i,/^record$/i,/^document$/i,/^name$/i,/^product$/i,/^part no\. and description$/i,/^description$/i,/^to$/i,/^from$/i,/^channel$/i,/^designation$/i];
+const ROLE_RX=[["id",/^(number|invoice no\.|inv\. no\.|code|part no\.|reference|version)$/i],["status",/^status$/i],["date",/^(date|date and time|time|changed|valid till)$/i],["branch",/^branch$/i]];
+const AMT_RX=[/^total$/i,/^amount$/i,/^balance owed$/i,/^balance$/i,/^value$/i,/^taxable value$/i,/^default rate$/i,/^stock here$/i];
+function tableRoles(t){if(t.dataset.roles||t.closest(".rep-out,.tv,.sheet,.chart"))return;const hs=[...t.querySelectorAll("thead th")].map(h=>h.textContent.trim());if(!hs.length)return;
+ const role=hs.map(()=> "x"),used={};hs.forEach((h,i)=>{if(i===0&&/^(#|s\. no\.)$/i.test(h)){role[i]="sn";return}const m=ROLE_RX.find(([r,rx])=>!used[r]&&rx.test(h));if(m){role[i]=m[0];used[m[0]]=1}});
+ for(const rx of TITLE_RX){const i=hs.findIndex((h,j)=>role[j]==="x"&&rx.test(h));if(i>=0){role[i]="title";used.title=1;break}}
+ for(const rx of AMT_RX){const i=hs.findIndex((h,j)=>role[j]==="x"&&rx.test(h));if(i>=0){role[i]="amount";break}}
+ if(!used.title){const i=used.id?role.indexOf("id"):role.indexOf("x");if(i>=0)role[i]="title"}
+ t.classList.add("cardable");t.dataset.roles="1";
+ t.querySelectorAll("tbody tr").forEach(tr=>{if(tr.children.length!==hs.length)return tr.classList.add("whole");[...tr.children].forEach((td,i)=>{td.dataset.role=role[i];if(!td.dataset.label)td.dataset.label=hs[i];if(/^[–—-]?$/.test(td.textContent.trim())&&!td.querySelector("input,select,button,textarea"))td.dataset.empty="1"})})}
+function mobilize(){$$("table").forEach(t=>{if(t.dataset.roles&&t.dataset.rows===String(t.tBodies[0]?.rows.length))return;delete t.dataset.roles;t.dataset.rows=String(t.tBodies[0]?.rows.length);tableRoles(t)})}
+new MutationObserver(()=>{cancelAnimationFrame(mobilize.f);mobilize.f=requestAnimationFrame(mobilize)}).observe(document.body,{childList:true,subtree:true});
 /* side panels (LG-6): open only on a click, stack two deep */
 let PANELS=[];
 function openPanel({title,ctx="",width="",body,foot="",mount,onClose}){
@@ -1114,8 +1250,8 @@ function renderLogin(){document.title="Billing Desk";
   if(L.locked){LOGIN_MSG=d==="Owner"?"This login is locked. Contact support to unlock the Owner login.":d==="Admin"?"This login is locked. Ask the Owner to unlock it.":"This login is locked. Ask Admin to unlock it.";return renderLogin()}
   if(p==="wrong"){L.failed++;if(L.failed>=S.company.lockout){L.locked=true;L.last=NOW();S.session={des:d,branch:b};audit("Login","Lock",d+" · "+branch(b).name,"failed attempts",L.failed-1,L.failed);S.session=null;LOGIN_MSG="This login is now locked after "+L.failed+" wrong passwords. "+(d==="Owner"?"Contact support to unlock it.":d==="Admin"?"Ask the Owner to unlock it.":"Ask Admin to unlock it.")}else LOGIN_MSG="Branch, designation or password is wrong.";return renderLogin()}
   L.failed=0;L.last=NOW();LOGIN_MSG="";S.session={des:d,branch:b,view:"branch",fy:f,machine:"DESK-"+branch(b).code+"-01",started:NOW()};audit("Login","Login",d+" · "+branch(b).name);
-  if(location.hash.length<3)location.hash="#/home";render();toast(`Logged in as ${d} at ${branch(b).name}`)}}
-function logout(reason){if(reason!=="Logout"&&ED){saveDraft()}audit("Login","Status change",sess().des+" · "+where(),"session end","",reason);S.session=null;ED=null;closeAllPanels();
+  /* every sign-in opens the Dashboard (NIKHIL, 3 Nov 2026) */if(location.hash!=="#/home")location.hash="#/home";render();toast(`Logged in as ${d} at ${branch(b).name}`);notifyDrafts()}}
+function logout(reason){if(ED){saveDraft()}audit("Login","Status change",sess().des+" · "+where(),"session end","",reason);S.session=null;ED=null;closeAllPanels();
  LOGIN_MSG=reason==="Idle"?"You were signed out after a period of inactivity. Your unsaved work will be offered back.":reason==="Time limit"?"Please sign in again (12-hour limit).":"";clearTimeout(IDLE.t);clearInterval(IDLE.i);render()}
 /* ---------- idle warning (LG-5) ---------- */
 const IDLE={t:null,i:null,left:0};
@@ -1126,6 +1262,13 @@ function renderIdle(){const bar=$("#idlebar");if(!bar)return;bar.innerHTML=IDLE.
 ACTS.stay=()=>resetIdle();
 document.addEventListener("pointerdown",()=>{if(IDLE.left>0)return;resetIdle()});
 /* ---------- drafts (form_drafts) ---------- */
+/* After sign-in, unfinished work (forms left open at the last sign-out or timeout) gets a notification that stays
+   until it is answered, with Continue to go straight back to the form (NIKHIL, 3 Nov 2026). */
+function notifyDrafts(){$$(".toast.note").forEach(t=>t.remove());const ds=S.drafts.filter(d=>d.login===sess().des+sess().branch&&d.machine===sess().machine);if(!ds.length)return;
+ const t=document.createElement("div");t.className="toast note";t.setAttribute("role","status");
+ t.innerHTML=`${ic("info")}<div class="grow"><b>Unfinished work</b><span class="sub">${ds.length===1?"You left this form before saving it.":`You left ${ds.length} forms before saving them.`}</span>${ds.slice(0,3).map(d=>`<div class="note-row"><span>${esc(d.label)}</span><button class="btn sm primary" data-act="draftOpen" data-k="${d.key}">Continue</button></div>`).join("")}</div><button class="icon-btn" data-act="noteClose" aria-label="Later">${ic("x")}</button>`;
+ $("#toasts").append(t)}
+ACTS.noteClose=a=>a.closest(".toast")?.remove();
 function saveDraft(){if(!ED)return;const label=`${KIND[ED.d.kind].name}${ED.d.clientId?" · "+client(ED.d.clientId).name:ED.d.vendorId?" · "+vendor(ED.d.vendorId).name:""}`;S.drafts=S.drafts.filter(x=>!(x.key===ED.key&&x.login===sess().des+sess().branch));S.drafts.push({key:ED.key,login:sess().des+sess().branch,machine:sess().machine,label,at:NOW(),data:clone(ED.d),mode:ED.mode,editId:ED.editId})}
 let WIDE=innerWidth>960;addEventListener("resize",()=>{const w=innerWidth>960;if(w!==WIDE){WIDE=w;const a=document.querySelector(".app");a&&a.classList.toggle("mini",w)}});
 
@@ -1135,7 +1278,7 @@ const chip=(t,tone="")=>`<span class="chip ${tone}">${esc(t)}</span>`;
 const TONE={Active:"good",Inactive:"",Saved:"good",Cancelled:"crit","Re-issued":"crit",Bounced:"crit",Draft:"",Pending:"accent",Sent:"accent",Converted:"good",Expired:"warn",Unpaid:"warn","Partly paid":"warn",Paid:"good",Overdue:"crit","In transit":"warn",Received:"good","At client site":"warn",Queued:"",Submitted:"accent",Delivered:"good",Read:"good",Failed:"crit",Filed:"",Undone:"",Open:"good",Closed:""};
 const stChip=s=>chip(s,TONE[s]||"");
 function listView(key,c){if(allView()&&c.rows.length&&c.rows[0].branch&&!c.cols.some(x=>x[0]==="Branch"))c=Object.assign({},c,{cols:[c.cols[0],["Branch",r=>esc(branch(r.branch).name)],...c.cols.slice(1)]});const st=LV[key]=LV[key]||{tab:c.tabs?c.tabs[0][0]:"",q:"",f:{}};st.f=st.f||{};
- const body=`<div class="page-head"><div><h1>${esc(c.title)}</h1><p>${c.purpose}</p></div><div class="acts">${c.actions||""}</div></div>
+ const body=`<div class="page-head list-head"><div><h1>${esc(c.title)}</h1><p>${c.purpose}</p></div><div class="acts">${c.actions||""}</div></div>
  ${c.stats?`<div class="stats">${c.stats.map(([l,v,h,t])=>`<div class="stat ${t||""}"><div class="k">${l}</div><div class="v">${v}</div><div class="h">${h||""}</div></div>`).join("")}</div>`:""}
  ${c.top||""}<div class="panel">${c.tabs?`<div class="ftabs" role="tablist">${c.tabs.map(([k,l,f])=>`<button role="tab" aria-selected="${st.tab===k}" class="${st.tab===k?"on":""}" data-tab="${k}">${l}<b>${c.rows.filter(f).length}</b></button>`).join("")}</div>`:""}
  <div class="toolbar"><div class="field grow"><label for="q_${key}">${c.searchLabel||"Search"}</label><div class="search">${ic("search")}<input id="q_${key}" class="input" placeholder="${c.searchPh||"Search"}" value="${esc(st.q)}"></div></div>${(c.filters||[]).map(([fk,fl,opts])=>`<div class="field"><label for="f_${key}_${fk}">${fl}</label><select id="f_${key}_${fk}" class="input" data-flt="${fk}"><option value="">All</option>${opts.map(o=>`<option ${st.f[fk]===o?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`).join("")}${c.tools||""}</div>
@@ -1212,7 +1355,7 @@ function byBranchPanel(invP,rec,inv,low,lowBr,label){const rows=S.branches.filte
  return `<div class="panel tw"><div class="panel-head"><div><h2>By branch</h2><span class="sub-line">${label[0].toUpperCase()+label.slice(1)} · pick a branch at the top to work in it</span></div></div><div class="table-wrap"><table><thead><tr><th scope="col">Branch</th><th scope="col" class="num">Sales</th><th scope="col" class="num">Received</th><th scope="col" class="num">To receive</th><th scope="col" class="num">Overdue</th><th scope="col" class="num">Low stock</th><th scope="col"></th></tr></thead><tbody>${rows.map(x=>`<tr><td><b>${esc(x.b.name)}</b><span class="sub">${x.b.code} · ${x.b.gstin}</span></td><td class="num">${money(x.s)}</td><td class="num">${money(x.r)}</td><td class="num">${money(x.due)}</td><td class="num">${x.od?`<span class="chip crit">${x.od}</span>`:"0"}</td><td class="num">${x.lo}</td><td style="text-align:right"><button class="btn sm" data-act="ownerSwitch" data-b="${x.b.id}">Work in ${esc(x.b.name)}</button></td></tr>`).join("")}</tbody><tfoot><tr><td>All branches</td><td class="num">${money(tot("s"))}</td><td class="num">${money(tot("r"))}</td><td class="num">${money(tot("due"))}</td><td class="num">${tot("od")}</td><td></td><td></td></tr></tfoot></table></div></div>`}
 ACTS.homeP=a=>{if(a.dataset.p==="custom"){toast("Custom dates: pick a start and end date (shown as This year in the preview).");HOME_P="year"}else HOME_P=a.dataset.p;render()};
 ACTS.draftDiscard=a=>{S.drafts=S.drafts.filter(d=>d.key!==a.dataset.k);toast("Unsaved work discarded.");render()};
-ACTS.draftOpen=a=>{const d=S.drafts.find(x=>x.key===a.dataset.k);RESTORE=d;go(d.mode==="edit"?"edit/"+d.editId:"edit/"+d.data.kind)};
+ACTS.draftOpen=a=>{$$(".toast.note").forEach(t=>t.remove());const d=S.drafts.find(x=>x.key===a.dataset.k);RESTORE=d;go(d.mode==="edit"?"edit/"+d.editId:"edit/"+d.data.kind)};
 let RESTORE=null;
 
 /* ---------- products (PM-1..PM-8) ---------- */
@@ -1787,7 +1930,7 @@ SCREENS.report=(id,arg)=>{const R=REPORTS.find(r=>r.id===id);if(!R)return SCREEN
  const table=out.need?`<div class="empty"><b>${out.need}</b>Then press Run.</div>`:!out.rows.length?`<div class="empty"><b>Nothing in this period</b>Widen the dates or clear a filter.</div>`:`<table><thead><tr>${out.cols.map((c,i)=>`<th class="${out.num.includes(i)?"num":""}">${c}</th>`).join("")}</tr></thead><tbody>${out.rows.map((r,j)=>`<tr ${out.href&&out.href[j]?`class="click" data-href="${out.href[j]}" tabindex="0"`:""}>${r.map((c,i)=>`<td class="${out.num.includes(i)?"num":""}">${c}</td>`).join("")}</tr>`).join("")}</tbody>${out.foot?`<tfoot><tr>${out.foot.map((c,i)=>`<td class="${out.num.includes(i)?"num":""}">${c}</td>`).join("")}</tr></tfoot>`:""}</table>`;
  const body=`<button class="back" onclick="go('reports')">${ic("back")}Reports</button><div class="page-head"><div><h1>${R.name}</h1><p>${R.about}${id==="stock"||id==="batches"?" The average purchase rate shows here and on stock screens only.":""}</p></div><div class="acts">${out.send?`<button class="btn" data-act="sendStatement" data-id="${out.send}">${ic("send")}Send statement</button>`:""}<button class="btn" onclick="window.print()">${ic("print")}Print</button><button class="btn" data-act="repXls">${ic("dl")}Export to Excel</button></div></div>
  <div class="panel"><div class="pb"><div class="grid g4">${R.nodates?"":`<div class="field"><label for="rf_from">Start date</label><input id="rf_from" type="date" class="input" data-rf="from" value="${f.from}"></div><div class="field"><label for="rf_to">End date</label><input id="rf_to" type="date" class="input" data-rf="to" value="${f.to}"></div>`}${R.f.map(ctl).join("")}<div style="align-self:end"><button class="btn primary" data-act="repRun">Run</button></div></div></div></div>
- <div class="panel tw">${table}</div>${out.rows&&out.rows.length?`<p class="hint">${out.rows.length} rows · ${allView()?"All branches":branch(sess().branch).name} · run ${fdt(NOW()).replace(/<[^>]+>/g," ")}</p>`:""}`;
+ <div class="panel tw rep-out">${table}</div>${out.rows&&out.rows.length?`<p class="hint">${out.rows.length} rows · ${allView()?"All branches":branch(sess().branch).name} · run ${fdt(NOW()).replace(/<[^>]+>/g," ")}</p>`:""}`;
  return {title:R.name,body,mount:()=>{$$("tr[data-href]").forEach(r=>r.onclick=()=>go(r.dataset.href))}}};
 ACTS.repRun=()=>{const id=ROUTE[1];const f=RF[id];$$("[data-rf]").forEach(e=>f[e.dataset.rf]=e.type==="checkbox"?e.checked:e.value);if(f.from>f.to)return toast("Start date is after the end date.",true);if(ROUTE[2])location.hash="#/report/"+id;else render()};
 ACTS.repXls=()=>toast("The Excel file is made on the server and matches this screen (RP-3).");
