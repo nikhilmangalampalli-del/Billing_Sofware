@@ -1017,7 +1017,8 @@ function sideNav(){const r=ROUTE[0]||"home";const br=sess().branch;const incomin
  return `<aside class="side ${UI.sideOpen?"open":""}" aria-label="Modules"><div class="brand"><div class="logo">₹B</div><span class="brand-t">Billing Desk</span></div>
  <nav class="nav">${NAV.filter(([g])=>g!=="Admin"||isAdmin()).map(([g,items])=>`<div class="nav-group">${g}</div>`+items.map(link).join("")).join("")}</nav>
  <div class="side-foot"><div class="user" title="${esc(s.des)} · ${esc(where())}"><div class="avatar">${esc(s.des.slice(0,2).toUpperCase())}</div><div style="min-width:0"><b>${esc(s.des)}</b>${esc(where())} · ${s.fy}</div><button class="icon-btn" data-act="logout" aria-label="Log out" title="Log out">${ic("logout")}</button></div><div class="foot-note">Preview with sample data. Nothing is saved or sent.</div></div></aside>`}
-ACTS.navSub=a=>{UI.sub[a.dataset.k]=!UI.sub[a.dataset.k];render()};
+/* Open or close a sub-menu in place: re-rendering the whole sidebar would drop its hover and focus and fold the rail */
+ACTS.navSub=a=>{const k=a.dataset.k;UI.sub[k]=!UI.sub[k];const nav=a.closest('.nav');if(!nav)return render();const t=document.createElement('div');t.innerHTML=sideNav();nav.innerHTML=t.querySelector('.nav').innerHTML;nav.querySelector(`[data-act=navSub][data-k="${k}"]`)?.focus({preventScroll:true})};
 ACTS.openSide=()=>{UI.sideOpen=true;render()};ACTS.closeSide=()=>{UI.sideOpen=false;render()};
 const isDark=()=>{const t=document.documentElement.dataset.theme;if(t)return t==="dark";return matchMedia("(prefers-color-scheme: dark)").matches};
 ACTS.theme=()=>{document.documentElement.dataset.theme=isDark()?"light":"dark";try{localStorage.setItem("bd.theme",document.documentElement.dataset.theme)}catch(e){}render()};
