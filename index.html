@@ -446,18 +446,18 @@ td.mono,td .mono{white-space:nowrap}
 .nav-caret{width:28px;height:28px;color:var(--side-fg);flex:none}.nav-caret:hover{background:var(--side-hover);color:#fff}.nav-caret svg{transition:transform .18s;transform:rotate(-90deg)}.nav-caret.open svg{transform:none}
 .nav-sub{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px}
 .app.mini{grid-template-columns:68px minmax(0,1fr)}
-.app.mini .side:not(:hover):not(:focus-within) .brand{padding:16px 0;justify-content:center;flex-direction:column;gap:6px;height:auto}
-.app.mini .side:not(:hover):not(:focus-within) .brand-t,.app.mini .side:not(:hover):not(:focus-within) .nl,.app.mini .side:not(:hover):not(:focus-within) .nav-caret,.app.mini .side:not(:hover):not(:focus-within) .nav-sub,.app.mini .side:not(:hover):not(:focus-within) .foot-note,.app.mini .side:not(:hover):not(:focus-within) .user>div:not(.avatar){display:none}
-.app.mini .side:not(:hover):not(:focus-within) .side-toggle{margin:0}.app.mini .side:not(:hover):not(:focus-within) .side-toggle svg{transform:rotate(180deg)}
-.app.mini .side:not(:hover):not(:focus-within) .nav{padding:10px 8px}.app.mini .side:not(:hover):not(:focus-within) .nav a{justify-content:center;padding:9px 0}
-.app.mini .side:not(:hover):not(:focus-within) .nav-group{font-size:0;padding:10px 0 4px;margin:0 10px;border-top:1px solid var(--side-line)}.app.mini .side:not(:hover):not(:focus-within) .nav-group:first-child{border-top:0}
-.app.mini .side:not(:hover):not(:focus-within) .nav a .count{position:absolute;top:2px;right:6px;margin:0;padding:0 5px;font-size:10px}
-.app.mini .side:not(:hover):not(:focus-within) .side-foot{padding:12px 8px}.app.mini .side:not(:hover):not(:focus-within) .user{flex-direction:column;gap:8px;align-items:center}
+.app.mini .side:not(:hover):not(:has(:focus-visible)) .brand{padding:16px 0;justify-content:center;flex-direction:column;gap:6px;height:auto}
+.app.mini .side:not(:hover):not(:has(:focus-visible)) .brand-t,.app.mini .side:not(:hover):not(:has(:focus-visible)) .nl,.app.mini .side:not(:hover):not(:has(:focus-visible)) .nav-caret,.app.mini .side:not(:hover):not(:has(:focus-visible)) .nav-sub,.app.mini .side:not(:hover):not(:has(:focus-visible)) .foot-note,.app.mini .side:not(:hover):not(:has(:focus-visible)) .user>div:not(.avatar){display:none}
+.app.mini .side:not(:hover):not(:has(:focus-visible)) .side-toggle{margin:0}.app.mini .side:not(:hover):not(:has(:focus-visible)) .side-toggle svg{transform:rotate(180deg)}
+.app.mini .side:not(:hover):not(:has(:focus-visible)) .nav{padding:10px 8px}.app.mini .side:not(:hover):not(:has(:focus-visible)) .nav a{justify-content:center;padding:9px 0}
+.app.mini .side:not(:hover):not(:has(:focus-visible)) .nav-group{font-size:0;padding:10px 0 4px;margin:0 10px;border-top:1px solid var(--side-line)}.app.mini .side:not(:hover):not(:has(:focus-visible)) .nav-group:first-child{border-top:0}
+.app.mini .side:not(:hover):not(:has(:focus-visible)) .nav a .count{position:absolute;top:2px;right:6px;margin:0;padding:0 5px;font-size:10px}
+.app.mini .side:not(:hover):not(:has(:focus-visible)) .side-foot{padding:12px 8px}.app.mini .side:not(:hover):not(:has(:focus-visible)) .user{flex-direction:column;gap:8px;align-items:center}
 @media (max-width:960px){.side-toggle{display:none}}
 /* Desktop: the sidebar stays a narrow icon rail and opens over the page while the pointer is on it */
 .side-toggle{display:none}
 .app.mini .side{width:68px;z-index:55;overflow-x:hidden;transition:width .16s ease,box-shadow .16s ease}
-.app.mini .side:hover,.app.mini .side:focus-within{width:244px;box-shadow:8px 0 24px rgba(0,0,0,.18)}
+.app.mini .side:hover,.app.mini .side:has(:focus-visible){width:244px;box-shadow:8px 0 24px rgba(0,0,0,.18)}
 .app.mini .side .nav a,.app.mini .side .nav-group,.app.mini .side .brand-t{white-space:nowrap}
 /* Send to party */
 .send-modal{width:min(560px,100%)}.send-modal .channels{grid-template-columns:1fr;gap:8px}
