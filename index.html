@@ -772,6 +772,40 @@ a.kpi,a.kpi:hover{text-decoration:none;color:inherit}a.kpi .label,a.kpi .foot{te
  table.cardable td:has(> .input + select)::before{flex-basis:100%}
  table.cardable td:has(> .input + select) .input{flex:1;min-width:0}
 }
+
+/* Paging under every long table (3 Nov 2026) */
+.pager{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
+.pager .acts{display:flex;gap:8px}
+.pager .btn svg{width:14px;height:14px}
+.flt-btn{display:none}
+@media (max-width:600px){
+ .pager{padding:10px 12px}
+ .pager>span{flex-basis:100%;text-align:center}
+ .pager .pager-pg{display:none}
+ .pager .acts{flex:1}.pager .acts .btn{flex:1;justify-content:center}
+ /* filters fold behind one button */
+ .toolbar>.flt-btn{display:inline-flex;grid-column:1/-1;justify-content:center;min-height:40px}
+ .toolbar>.flt-btn b{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-fg);font-size:11px;padding:0 5px}
+ .toolbar:has(> .flt-btn):not(.show-flt)>.field:not(.grow){display:none}
+ .toolbar.show-flt>.flt-btn{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+ .toolbar>.field.grow{grid-column:1/-1}
+ .toolbar:has(> .flt-btn)>.field.grow{grid-column:1}
+ .toolbar:has(> .flt-btn){grid-template-columns:minmax(0,1fr) auto}
+ .toolbar:has(> .flt-btn)>.flt-btn{grid-column:2;grid-row:1;align-self:end;min-height:44px;padding:0 12px}
+ .toolbar:not(:has(> .field.grow))>.flt-btn{grid-column:1/-1;justify-content:center}
+ .toolbar.show-flt>.field:not(.grow){grid-column:auto}
+ .toolbar:has(> .flt-btn).show-flt{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .toolbar:has(> .flt-btn).show-flt>.field.grow{grid-column:1}
+ /* back link sits in the app bar */
+ .content>.back:first-child,.content>button.back{position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;z-index:25;height:36px;max-width:55vw;margin:0;padding:0 10px 0 6px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;gap:4px}
+ .app:has(.content>.back) .top-logo,.app:has(.content>button.back) .top-logo{visibility:hidden}
+ /* Changes card: buttons on one row */
+ .chg-acts{flex-wrap:nowrap}.chg-acts .btn,.chg-acts .btn.danger{flex:1 1 0;min-width:0;padding:0 8px}
+ /* status tabs fade at the edge to show they scroll */
+ .ftabs{mask-image:linear-gradient(90deg,#000 85%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent)}
+ /* tables that page: hidden rows never show as cards */
+ table.cardable tr[hidden]{display:none!important}
+}
 </style></head>
 <body><div id="app"></div><div id="toasts" class="toasts" aria-live="polite"></div>
 <script>
@@ -1102,6 +1136,11 @@ function seed(){
   {at:"2026-09-25 16:30",to:"City Diagnostics Centre",addr:"accounts@citydiag.example",channel:"Email",purpose:"Receipt",docId:n(["RC","2026-09-25"]).id,status:"Bounced",reason:"Mailbox full",des:"Accountant",branch:"b1"});
  // audit seed
  [["2026-10-28 18:40","Sales","Sale Invoice","Create",n(["SI","2026-10-28"]).number,"","","",""],["2026-10-27 18:02","Store","Login","Lock","Store · Vijayawada","failed attempts","4","5",""],["2026-10-26 11:15","Accountant","Receipt","Create",n(["RC","2026-10-26"]).number,"","","₹18.00",""],["2026-10-20 10:05","Admin","Price lists","Edit","Hospital","US-PRB-1001 rate","₹1,150.00","₹1,180.00","Vendor price rise"],["2026-10-11 16:05","Admin","Company Settings","GST month filed","Hyderabad · Sep 2026","status","","Filed","GSTR-1 filed"],["2026-10-07 17:02","Sales","Sale Invoice","Print",n(["SI","2026-10-07"]).number,"for client","","Yes",""],["2026-10-24 12:20","Admin","Sale Invoice","Cancel","VJASI/2627/00002","status","Saved","Cancelled","Client ordered the wrong part"],["2026-10-22 15:05","Admin","Client Master","Edit","CL-0301","mobile","9848000011","9848000099","Client changed number"],["2026-10-21 10:40","Admin","Company Settings","Edit","Numbering BLRSI","digits","5","4","Shorter numbers"]].map((a,i)=>({a,br:/VJA|· Vijayawada/.test(a[4])?"Vijayawada":a[4]==="CL-0301"||/BLR/.test(a[4])?"Bengaluru":"Hyderabad"})).filter(({a})=>auditWorth(a[2],a[3],a[5],a[6],a[7])).forEach(({a,br})=>S.audit.push({at:a[0],des:a[1],branch:br,machine:"DESK-"+({Hyderabad:"HYD",Vijayawada:"VJA",Bengaluru:"BLR"}[br])+"-0"+(a[1]==="Store"?2:1),module:a[2],action:a[3],record:a[4],field:a[5],old:a[6],new:a[7],reason:a[8],name:""}));
+ /* More sample history so long lists show their paging (3 Nov 2026): 30 small clinics in Hyderabad (no documents yet)
+    and two months of older print and send entries in the audit log. */
+ ["Apollo Dental","Sri Sai Clinic","Care Ortho","Prime Physio","Sunrise Scans","Nova Diagnostics","Green Cross Clinic","Lotus Eye Care","Metro Labs","Vision Scan Point","Aster Kids Clinic","Medline Imaging","Pulse Heart Care","Kaveri Clinic","Blue Sky Labs","Unity Health","Shanti Nursing Home","Om Diagnostics","Pearl Dental","Star Imaging","Healthway Labs","Silver Oak Clinic","Royal Ortho","Bright Smile Dental","Grace Clinic","Rainbow Scans","Trust Labs","CareWell Clinic","Spark Physio","Life Line Diagnostics"].forEach((nm,i)=>S.clients.push({id:"cx"+i,branch:"b1",code:"CL-"+String(110+i).padStart(4,"0"),name:nm,group:"",category:i%3?"Clinic":"Diagnostic centre",gstin:"",state:"36",mobile:"90000"+String(20000+i*7),landline:"",email:"",address:(i+3)+" Main Road, Hyderabad",pin:"5000"+String(10+i),location:["Ameerpet","Kukatpally","Madhapur","Dilsukhnagar","Kondapur"][i%5],creditDays:[0,15,30][i%3],priceList:"",prefs:["WhatsApp"],fe:"",remarks:"",status:i%11===10?"Inactive":"Active",sites:[{id:"sx"+i,label:"Main",address:(i+3)+" Main Road, Hyderabad",pin:"5000"+String(10+i),state:"36",gstin:"",isDefault:true}]}));
+ for(let i=0;i<40;i++){const d=new Date(Date.UTC(2026,7,4+Math.floor(i*1.4)));const day=d.toISOString().slice(0,10);const si=S.docs.filter(x=>x.kind==="SI"&&x.branch==="b1");const doc=si[i%si.length];
+  S.audit.push({at:day+" "+String(9+i%8).padStart(2,"0")+":"+String((i*13)%60).padStart(2,"0"),des:["Sales","Accountant","Admin"][i%3],branch:"Hyderabad",machine:"DESK-HYD-0"+(1+i%2),module:"Sale Invoice",action:i%2?"Send":"Print",record:doc?doc.number:"HYDSI/2627/00001",field:i%2?"channels":"for client",old:"",new:i%2?"WhatsApp":"Yes",reason:"",name:""})}
  S.audit.sort((a,b)=>b.at.localeCompare(a.at));
  const BY={QT:"Sales",SI:"Sales",CN:"Sales",RC:"Accountant",PY:"Accountant",PE:"Store",DC:"Store",AD:"Store"};S.docs.forEach((d,i)=>{d.created=d.sentAt&&d.sentAt.slice(0,10)===d.date?d.date+" "+String(9+i%3).padStart(2,"0")+":"+String(10+i*7%50):d.date+" "+String(10+i%6).padStart(2,"0")+":"+String(5+i*11%50).padStart(2,"0");d.by=BY[d.kind]||"Admin"});
  S.session=null;settleAll()}
@@ -1183,7 +1222,25 @@ function tableRoles(t){if(t.dataset.roles||t.closest(".rep-out,.tv,.sheet,.chart
  if(!used.title){const i=used.id?role.indexOf("id"):role.indexOf("x");if(i>=0)role[i]="title"}
  t.classList.add("cardable");t.dataset.roles="1";
  t.querySelectorAll("tbody tr").forEach(tr=>{if(tr.children.length!==hs.length)return tr.classList.add("whole");[...tr.children].forEach((td,i)=>{td.dataset.role=role[i];if(!td.dataset.label)td.dataset.label=hs[i];if(/^[–—-]?$/.test(td.textContent.trim())&&!td.querySelector("input,select,button,textarea"))td.dataset.empty="1"})})}
-function mobilize(){$$("table").forEach(t=>{if(t.dataset.roles&&t.dataset.rows===String(t.tBodies[0]?.rows.length))return;delete t.dataset.roles;t.dataset.rows=String(t.tBodies[0]?.rows.length);tableRoles(t)})}
+/* Paging (design 4, 3 Nov 2026): any table with more rows than fit one page shows 25 at a time (reports 50), with
+   "21–40 of 132 · page 2 of 6" and Previous / Next under it. Document and editor lines are never paged. A change in
+   the row count (search, tab, filter) goes back to page 1. */
+function pageTable(t){if(t.closest(".editor,.sheet,.tv,.chart,.sp .grid-lines")||t.classList.contains("grid-lines"))return;const tb=t.tBodies[0];if(!tb)return;
+ const rows=[...tb.rows].filter(r=>!r.classList.contains("whole")||r.cells.length>1),size=t.closest(".rep-out")?50:25,n=rows.length;
+ const host=t.closest(".table-wrap,.tw")||t;let pg=host.nextElementSibling?.classList.contains("pager")?host.nextElementSibling:null;
+ if(n<=size){rows.forEach(r=>r.hidden=false);pg&&pg.remove();delete t.dataset.pg;return}
+ if(t.dataset.n!==String(n)){t.dataset.n=String(n);t.dataset.pg="1"}
+ const pages=Math.ceil(n/size),p=Math.min(+t.dataset.pg||1,pages);rows.forEach((r,i)=>r.hidden=!(i>=(p-1)*size&&i<p*size));
+ if(!pg){pg=document.createElement("nav");pg.className="pager";pg.setAttribute("aria-label","Pages");host.after(pg)}
+ const html=`<span>${(p-1)*size+1}–${Math.min(n,p*size)} of ${n}<span class="pager-pg"> · page ${p} of ${pages}</span></span><div class="acts"><button class="btn sm" data-pg="-1" ${p<=1?"disabled":""}>${ic("back")}Previous</button><button class="btn sm" data-pg="1" ${p>=pages?"disabled":""}>Next</button></div>`;
+ if(pg.innerHTML!==html)pg.innerHTML=html;
+ pg.onclick=e=>{const b=e.target.closest("[data-pg]");if(!b||b.disabled)return;t.dataset.pg=String(p+ +b.dataset.pg);pageTable(t);(t.closest(".panel")||host).scrollIntoView({block:"start",behavior:"smooth"})}}
+/* Phone filters (design 3.4): a list's filters fold behind one Filters button that shows how many are set. */
+function foldFilters(tb){const fs=[...tb.querySelectorAll(":scope > .field:not(.grow)")];if(!fs.length)return;let b=tb.querySelector(":scope > .flt-btn");
+ const set=fs.filter(f=>{const x=f.querySelector("select,input");return x&&x.value&&x.value!=="all"}).length;
+ if(!b){b=document.createElement("button");b.type="button";b.className="btn flt-btn";b.onclick=()=>{tb.classList.toggle("show-flt");foldFilters(tb)};tb.querySelector(":scope > .field.grow")?.after(b)||tb.prepend(b);tb.addEventListener("change",()=>foldFilters(tb))}
+ const html=`${ic("adjust")}Filters${set?` <b>${set}</b>`:""}`;if(b.innerHTML!==html)b.innerHTML=html;b.setAttribute("aria-expanded",tb.classList.contains("show-flt"))}
+function mobilize(){$$("table").forEach(t=>{if(!(t.dataset.roles&&t.dataset.rows===String(t.tBodies[0]?.rows.length))){delete t.dataset.roles;t.dataset.rows=String(t.tBodies[0]?.rows.length);tableRoles(t)}pageTable(t)});$$(".toolbar").forEach(foldFilters)}
 new MutationObserver(()=>{cancelAnimationFrame(mobilize.f);mobilize.f=requestAnimationFrame(mobilize)}).observe(document.body,{childList:true,subtree:true});
 /* side panels (LG-6): open only on a click, stack two deep */
 let PANELS=[];
