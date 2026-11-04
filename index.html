@@ -687,7 +687,8 @@ a.kpi,a.kpi:hover{text-decoration:none;color:inherit}a.kpi .label,a.kpi .foot{te
 @media (max-width:600px){.top .session{flex-wrap:nowrap}}
 
 /* Unfinished-work notification after sign-in (3 Nov 2026) */
-.toast.note{background:var(--surface);color:var(--fg);border:1px solid var(--line-strong);align-items:flex-start;max-width:380px;padding:12px 12px 12px 14px}
+/* Unfinished work sits at the bottom right, under side panels, so it never covers the page head's buttons (NIKHIL, 4 Nov 2026: responsiveness check) */
+.toast.note{position:fixed;right:20px;bottom:20px;z-index:44;background:var(--surface);color:var(--fg);border:1px solid var(--line-strong);align-items:flex-start;max-width:380px;padding:12px 12px 12px 14px}
 .toast.note>svg{color:var(--accent);margin-top:2px}
 .toast.note .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .toast.note .sub{color:var(--muted);font-size:12.5px}
@@ -805,7 +806,9 @@ a.kpi,a.kpi:hover{text-decoration:none;color:inherit}a.kpi .label,a.kpi .foot{te
  .btn{min-height:44px}
  .tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
  .tabs button{flex:none}
- .toast.note{max-width:none}
+ .toast.note{max-width:none;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom))}
+ /* above the floating main button when the page has one */
+ body:has(.page-head .acts .btn.primary) :is(.toasts,.toast.note){bottom:calc(136px + env(safe-area-inset-bottom))}
  /* fixed bars must not sit inside a transformed parent, so pages fade in instead of rising */
  .content.enter>*{animation:none}
  .page-head .acts>.faint{display:none}
@@ -848,6 +851,19 @@ a.kpi,a.kpi:hover{text-decoration:none;color:inherit}a.kpi .label,a.kpi .foot{te
  .ftabs{mask-image:linear-gradient(90deg,#000 85%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent)}
  /* tables that page: hidden rows never show as cards */
  table.cardable tr[hidden]{display:none!important}
+}
+
+/* Phone taps on fixed bars (NIKHIL, 3 Nov 2026: "the touch is not working when I have a list on my screen").
+   On iPhones, and above all inside an embedded page, a long page that scrolls the whole document can leave the fixed
+   bars (tab bar, Save bar, floating button) drawn in one place but taking taps in another. The app scrolls inside its own
+   box instead, so the fixed bars never move with the page, and the bars are solid (no backdrop blur) so taps reach them. */
+@media (max-width:600px){
+ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+ #app{height:100%}
+ .app,.login{height:100%;min-height:0!important;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+ .tabbar{background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;touch-action:manipulation}
+ .tabbar a,.tabbar button,.aside-acts .btn,.page-head .acts .btn.primary,.content>.back:first-child,.content>button.back{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+ .aside-acts{backdrop-filter:none;-webkit-backdrop-filter:none}
 }
 </style></head>
 <body><div id="app"></div><div id="toasts" class="toasts" aria-live="polite"></div>
@@ -1005,7 +1021,7 @@ function validate(d){
   if(["PE"].includes(d.kind)&&!d.vendorId)return "Pick the vendor.";
   if(d.lines&&["SI","QT","PE","DC","AD"].includes(d.kind)&&!d.lines.length)return "Add at least one product.";
   if(d.kind==="PE"){if(!d.billNo)return "Enter the vendor's bill number.";const fyv=x=>fyOf(addDays(x,0));if(S.docs.some(o=>o.id!==d.id&&o.kind==="PE"&&o.vendorId===d.vendorId&&o.billNo.trim().toLowerCase()===d.billNo.trim().toLowerCase()&&fyv(o.billDate)===fyv(d.billDate)))return "This vendor bill is already entered for the vendor's financial year (PU-3).";
-    for(const l of d.lines){if(!l.batchNo)return `Enter the batch number for ${prod(l.pid).partNo}.`;if(prod(l.pid).hasExpiry&&!l.expiry)return `Enter the expiry for ${prod(l.pid).partNo}.`}}
+    const autoSeen=new Set();for(const l of d.lines){if(!l.batchNo&&prod(l.pid).hasExpiry)return `${prod(l.pid).partNo} has expiry, so enter the batch printed on the box.`;if(!l.batchNo){if(autoSeen.has(l.pid))return `${prod(l.pid).partNo} already has a line with the automatic batch. Type a batch number on one of them.`;autoSeen.add(l.pid)}if(prod(l.pid).hasExpiry&&!l.expiry)return `Enter the expiry for ${prod(l.pid).partNo}.`}}
   if(d.kind==="SI")for(const l of d.lines){const tot=r2((+l.qty||0)+(+l.free||0)),b=r2((l.batches||[]).reduce((a,x)=>a+x.qty,0));if(!(+l.qty>0))return `Enter a quantity for ${l.partNo}.`;if(b<tot-0.0001)return `Only ${b} of ${tot} ${l.unit} of ${l.partNo} is covered by batches in stock (SI-4).`}
   if(d.kind==="RC"){if(!(+d.amount>0))return "Enter an amount above zero.";if(d.rkind!=="Write-off"&&["Cheque","DD"].includes(d.mode)&&d.chequeDate&&daysBetween(d.chequeDate,d.date)>90)return "This cheque is older than 3 months and can't be accepted (FT-4).";
     if(d.rkind==="Write-off"&&+d.amount>clientDue(d.clientId)+0.004)return "A write-off can't be more than the client's balance.";if(d.rkind==="Write-off"&&!d.notes)return "Give a reason for the write-off.";
@@ -1019,9 +1035,11 @@ function validate(d){
 function saveNew(d,{quiet}={}){
   if(d.lines)calc(d);
   const e=validate(d);if(e)return e;
+  // PU-6: a line with no batch on the box takes the purchase number as its batch.
+  if(d.kind==="PE"&&d.lines.some(l=>!l.batchNo)){d.number=nextNumber("PE",d.branch,d.fy);d.lines.forEach(l=>{if(!l.batchNo){l.batchNo=d.number;l.batchAuto=true}})}
   const m=movesFor(d);const se=canApply(m);if(se)return se;
   if(d.kind==="QT"&&d.status==="Draft"){d.number="";}
-  else d.number=nextNumber(d.kind,d.branch,d.fy);
+  else if(!(d.kind==="PE"&&d.number))d.number=nextNumber(d.kind,d.branch,d.fy);
   d.id=d.id||uid("d");d.version=1;d.created=d.created||NOW();d.by=d.by||(S.session?S.session.des:"Admin");
   if(!d.status)d.status="Saved";
   S.docs.push(d);applyMoves(d,m);d.moved=m;
@@ -1259,10 +1277,10 @@ function render(){
  if(location.hash!==render.last||!HIST.inited)histEnter(location.hash||"#/home");ROUTE=(location.hash.replace(/^#\/?/,"")||"home").split("/");
  const r=ROUTE[0],f=SCREENS[r]||SCREENS.home;let out;
  try{out=f(...ROUTE.slice(1))}catch(e){console.error(e);out={title:"Error",body:`<div class="callout crit">This page failed to load: ${esc(e.message)}</div>`}}
- render.anim=location.hash!==render.last;UI.sideOpen=UI.sideOpen&&location.hash===render.last;app().innerHTML=shell(out.title,out.body);histTitle(String(out.title||"").replace(/<[^>]+>/g,""));
+ render.anim=location.hash!==render.last;const keepTop=!render.anim&&$(".app")?$(".app").scrollTop:0;UI.sideOpen=UI.sideOpen&&location.hash===render.last;app().innerHTML=shell(out.title,out.body);histTitle(String(out.title||"").replace(/<[^>]+>/g,""));
  if(out.mount)out.mount();
  if(UI.railHover)$(".side")?.classList.add("hold");
- renderIdle();const h=location.hash;if(h!==render.last){render.last=h;window.scrollTo(0,0)}}
+ renderIdle();const h=location.hash;if(h!==render.last){render.last=h;window.scrollTo(0,0)}else if(keepTop){const sc=$(".app");if(sc)sc.scrollTop=keepTop}}
 /* Phone rows (design 3.4, 3 Nov 2026). Under 600 px every table row becomes a short card. Each cell gets a role from its
    column heading: title (party or name), id (number or code), amount (one money column), status, date, branch; the rest are
    extra. List rows show title and amount on line one, number, date and status on line two, and drop the extras (they are on
@@ -1380,7 +1398,7 @@ document.addEventListener("pointerdown",()=>{if(IDLE.left>0)return;resetIdle()})
 function notifyDrafts(){$$(".toast.note").forEach(t=>t.remove());const ds=S.drafts.filter(d=>d.login===sess().des+sess().branch&&d.machine===sess().machine);if(!ds.length)return;
  const t=document.createElement("div");t.className="toast note";t.setAttribute("role","status");
  t.innerHTML=`${ic("info")}<div class="grow"><b>Unfinished work</b><span class="sub">${ds.length===1?"You left this form before saving it.":`You left ${ds.length} forms before saving them.`}</span>${ds.slice(0,3).map(d=>`<div class="note-row"><span>${esc(d.label)}</span><button class="btn sm primary" data-act="draftOpen" data-k="${d.key}">Continue</button></div>`).join("")}</div><button class="icon-btn" data-act="noteClose" aria-label="Later">${ic("x")}</button>`;
- $("#toasts").append(t)}
+ document.body.append(t)}
 ACTS.noteClose=a=>a.closest(".toast")?.remove();
 function saveDraft(){if(!ED)return;const label=`${KIND[ED.d.kind].name}${ED.d.clientId?" · "+client(ED.d.clientId).name:ED.d.vendorId?" · "+vendor(ED.d.vendorId).name:""}`;S.drafts=S.drafts.filter(x=>!(x.key===ED.key&&x.login===sess().des+sess().branch));S.drafts.push({key:ED.key,login:sess().des+sess().branch,machine:sess().machine,label,at:NOW(),data:clone(ED.d),mode:ED.mode,editId:ED.editId})}
 let WIDE=innerWidth>960;addEventListener("resize",()=>{const w=innerWidth>960;if(w!==WIDE){WIDE=w;const a=document.querySelector(".app");a&&a.classList.toggle("mini",w)}});
@@ -1481,7 +1499,7 @@ SCREENS.products=()=>{const br=sess().branch;const rows=S.products.slice().sort(
   cols:[["Part no.",p=>`<span class="mono">${p.partNo}</span>${p.base?' <span class="chip plain">Variant</span>':""}`],["Alt part no.",p=>`<span class="mono">${p.alt}</span>`],["Description",p=>esc(p.desc)+`<span class="sub">${esc(p.type)}</span>`],["HSN",p=>`<span class="mono">${p.hsn}</span>`],["Modality",p=>esc(p.modality)],["Unit",p=>p.unit],["GST",p=>pct(p.gst),"num"],["Default rate",p=>money(p.rate),"num"],["Stock here",p=>{const s=stockAt(p.id,br);return s<p.min?`<span class="chip warn">${qtyf(s)}</span>`:qtyf(s)},"num"],["All branches",p=>qtyf(stockAll(p.id)),"num"],["Status",p=>stChip(p.status)]],
   href:p=>"product/"+p.id,muted:p=>p.status!=="Active",rowCls:p=>p.base?"variant":"",filters:[["type","Part type",S.lists.product_type,p=>p.type],["mod","Modality",S.lists.modality,p=>p.modality]],note:"The average purchase rate is shown only on stock screens and stock reports (PM-6)."})};
 function productPanel(p){const n=!p;p=p||{partNo:"",alt:"",desc:"",type:"Spare part",modality:"",unit:"Nos",hsn:"",gst:18,rate:"",min:0,vendorId:"",hasExpiry:false,serial:false,storage:"",fits:"",status:"Active",base:""};
- const sel=(id,arr,v,blank)=>`<select id="${id}" class="input">${blank?`<option value="">${blank}</option>`:""}${arr.map(x=>`<option ${String(x[0]??x)===String(v)?"selected":""} value="${esc(x[0]??x)}">${esc(x[1]??x)}</option>`).join("")}</select>`;
+ const sel=(id,arr,v,blank)=>`<select id="${id}" class="input">${blank?`<option value="">${blank}</option>`:""}${arr.map(x=>{const[k,t]=Array.isArray(x)?x:[x,x];return`<option ${String(k)===String(v)?"selected":""} value="${esc(k)}">${esc(t)}</option>`}).join("")}</select>`;
  const used=!n&&S.docs.some(d=>(d.lines||[]).some(l=>l.pid===p.id));
  openPanel({title:n?"New product":"Edit product",ctx:n?"Listed at every branch with zero stock (PM-3)":esc(p.partNo),body:`<div class="grid g2">
  <div class="field"><label for="fPn">Part no. <span class="req">*</span></label><input id="fPn" class="input mono" value="${esc(p.partNo)}">${used?'<span class="hint">Used on documents. Saved documents keep the old number (PM-7).</span>':""}</div>
@@ -1714,7 +1732,7 @@ function newDoc(kind,src){const s=sess();const fy=S.fys.find(f=>f.id===s.fy);con
  if(kind==="SI"){Object.assign(d,{clientId:"",invType:"Credit",due:"",upiRef:"",supply:"B2B",po:"",billDiscType:"%",billDiscVal:0,transport:0,weArrange:false,other:0});
   const q=src&&doc(src);if(q&&q.kind==="QT"){Object.assign(d,{clientId:q.clientId,siteId:q.siteId,shipState:q.shipState,priceList:q.priceList,fe:q.fe,quoteId:q.id,billDiscType:q.billDiscType||"%",billDiscVal:q.billDiscVal||0,transport:q.transport||0,weArrange:!!q.weArrange,lines:q.lines.map(l=>({...clone(l),batches:[]}))});d.due=addDays(date,client(q.clientId).creditDays)}
   if(q&&q.kind==="DC"){const c=client(q.siteClient);const s=c.sites.find(x=>x.id===q.siteId)||c.sites.find(x=>x.isDefault)||c.sites[0];Object.assign(d,{clientId:c.id,siteId:s.id,shipState:s.state,priceList:c.priceList,fe:c.fe,fromDecl:q.id,lines:q.lines.map((l,i)=>({l,i})).filter(({l})=>dcOpen(l)>0).map(({l,i})=>{const p=prod(l.pid);const lr=rateFor(p.id,c.id);return {pid:p.id,partNo:p.partNo,desc:p.desc,hsn:p.hsn,unit:p.unit,gst:p.gst,qty:dcOpen(l),free:0,rate:lr,listRate:lr,discType:"%",discVal:0,declLine:i,batchNo:l.batchNo,expiry:l.expiry,batches:[]}})});d.due=addDays(date,c.creditDays)}}
- if(kind==="PE")Object.assign(d,{vendorId:"",billNo:"",billDate:date,itc:true,other:0,billTotal:""});
+ if(kind==="PE")Object.assign(d,{vendorId:"",billNo:"",billDate:date,itc:true,other:0,billTotal:"",billBatch:"",billExpiry:""});
  if(kind==="CN"||kind==="CDN"){const o=doc(src);Object.assign(d,{clientId:o.clientId,srcId:o.id,shipState:o.shipState,noteType:kind==="CN"?"Goods return":"Extra charge",reason:"",lines:o.lines.map((l,i)=>{const b=(l.batches||[])[0]||{};return {...clone(l),batches:undefined,srcLine:i,max:r2((+l.qty)-(l.returned||0)),qty:0,free:0,restock:true,batchNo:b.batchNo||"",expiry:b.expiry||"",rate:kind==="CDN"?0:l.rate}})})}
  if(kind==="DN"){const o=doc(src);Object.assign(d,{vendorId:o.vendorId,srcId:o.id,noteType:"Goods return",reason:"",lines:o.lines.map((l,i)=>({...clone(l),srcLine:i,max:r2((+l.qty)-(l.returned||0)),qty:0,free:0,restock:true}))})}
  if(kind==="DC")Object.assign(d,{dkind:"Branch transfer",purpose:"Branch transfer",toBranch:"",siteClient:"",siteId:"",forInvoice:"",transport:"",carriedBy:""});
@@ -1772,8 +1790,9 @@ function linesBlock(d){const k=d.kind;const L=d.lines;const n=isNote(k);
  else if(n){const gr=d.noteType==="Goods return";head=`<th>Product</th><th>Batch</th><th class="num">Billed</th><th class="num">${gr?"Return qty":"Qty"}</th><th class="num">${k==="CDN"?"Extra per unit":gr?"Rate":"Reduction per unit"}</th>${gr?`<th>Back to stock</th>`:""}<th class="num">GST</th><th class="num">Amount</th>`;
   row=(l,i)=>`<td><span class="mono">${esc(l.partNo)}</span><span class="sub">${esc(l.desc)}</span></td><td class="mono">${esc(l.batchNo||"–")}</td><td class="num">${qtyf(l.max)}</td><td class="num"><input class="input w60 num" data-l="${i}" data-k="qty" value="${l.qty}" aria-label="Quantity"></td><td class="num">${gr?money(l.rate):`<input class="input w90 num" data-l="${i}" data-k="rate" value="${l.rate}" aria-label="Rate">`}</td>${gr?`<td><input type="checkbox" data-l="${i}" data-k="restock" ${l.restock?"checked":""} aria-label="Back to stock"></td>`:""}<td class="num">${l.gst}%</td><td class="num" data-amt="${i}">${money(l.amount||0)}</td>`}
  else{const pe=k==="PE",si=k==="SI";head=`<th>Product</th>${pe?"<th>Batch</th><th>Expiry</th>":""}<th class="num">Qty</th>${pe||si?'<th class="num">Free</th>':""}<th class="num">Rate</th><th class="num">Disc</th><th class="num">GST</th><th class="num">Amount</th><th></th>`;
-  row=(l,i)=>`<td><span class="mono">${esc(l.partNo)}</span><span class="sub">${esc(l.desc)} · HSN ${l.hsn}</span>${si?`<span class="sub" data-bt="${i}">${btText(l)}</span>`:""}</td>${pe?`<td><input class="input w90" data-l="${i}" data-k="batchNo" value="${esc(l.batchNo||"")}" aria-label="Batch"></td><td>${prod(l.pid).hasExpiry?`<input type="date" class="input w120" data-l="${i}" data-k="expiry" value="${l.expiry||""}" aria-label="Expiry">`:'<span class="faint">No expiry</span>'}</td>`:""}<td class="num"><input class="input w60 num" data-l="${i}" data-k="qty" value="${l.qty}" aria-label="Quantity"></td>${pe||si?`<td class="num"><input class="input w60 num" data-l="${i}" data-k="free" value="${l.free||0}" aria-label="Free quantity"></td>`:""}<td class="num"><input class="input w90 num" data-l="${i}" data-k="rate" value="${l.rate}" aria-label="Rate">${!pe?`<span class="sub" style="color:var(--warn)" data-dl="${i}">${difTxt(l)}</span>`:""}</td><td class="num"><input class="input w60 num" data-l="${i}" data-k="discVal" value="${l.discVal||0}" aria-label="Discount"><select class="input" data-l="${i}" data-k="discType" aria-label="Discount type" style="width:46px">${["%","₹"].map(x=>`<option ${l.discType===x?"selected":""}>${x}</option>`).join("")}</select></td><td class="num">${l.gst}%</td><td class="num" data-amt="${i}">${money(l.amount||0)}</td><td><button class="icon-btn" data-act="edDel" data-i="${i}" aria-label="Remove line">${ic("x")}</button></td>`}
- const pick=!n?`<div class="toolbar">${pickerHTML("prodQ","Add a product: part number, alt part number, barcode or description")}<span class="hint" style="align-self:center">Scan or type. Enter adds an exact barcode match.</span></div>`:"";
+  row=(l,i)=>`<td><span class="mono">${esc(l.partNo)}</span><span class="sub">${esc(l.desc)} · HSN ${l.hsn}</span>${si?`<span class="sub" data-bt="${i}">${btText(l)}</span>`:""}</td>${pe?`<td><input class="input w90" data-l="${i}" data-k="batchNo" value="${esc(l.batchNo||"")}" placeholder="${prod(l.pid).hasExpiry?"Required":"Auto"}" aria-label="Batch">${!prod(l.pid).hasExpiry?'<span class="sub" data-auto="'+i+'"'+(l.batchNo?' style="display:none"':'')+'>Purchase no. on save</span>':""}</td><td>${prod(l.pid).hasExpiry?`<input type="date" class="input w120" data-l="${i}" data-k="expiry" value="${l.expiry||""}" aria-label="Expiry">`:'<span class="faint">No expiry</span>'}</td>`:""}<td class="num"><input class="input w60 num" data-l="${i}" data-k="qty" value="${l.qty}" aria-label="Quantity"></td>${pe||si?`<td class="num"><input class="input w60 num" data-l="${i}" data-k="free" value="${l.free||0}" aria-label="Free quantity"></td>`:""}<td class="num"><input class="input w90 num" data-l="${i}" data-k="rate" value="${l.rate}" aria-label="Rate">${!pe?`<span class="sub" style="color:var(--warn)" data-dl="${i}">${difTxt(l)}</span>`:""}</td><td class="num"><input class="input w60 num" data-l="${i}" data-k="discVal" value="${l.discVal||0}" aria-label="Discount"><select class="input" data-l="${i}" data-k="discType" aria-label="Discount type" style="width:46px">${["%","₹"].map(x=>`<option ${l.discType===x?"selected":""}>${x}</option>`).join("")}</select></td><td class="num">${l.gst}%</td><td class="num" data-amt="${i}">${money(l.amount||0)}</td><td><button class="icon-btn" data-act="edDel" data-i="${i}" aria-label="Remove line">${ic("x")}</button></td>`}
+ const bb=k==="PE"&&!n?`<div class="grid g2 bill-batch" style="padding:12px 16px 0"><div class="field"><label for="f_billBatch">Batch for this bill</label><input id="f_billBatch" class="input mono" data-f="billBatch" placeholder="As printed on the box" value="${esc(d.billBatch||"")}"><span class="hint">Fills every line you add. Type on a line to change just that one. Left empty, items without expiry get this purchase's number as their batch.</span></div><div class="field"><label for="f_billExpiry">Expiry for this bill</label><input id="f_billExpiry" type="date" class="input" data-f="billExpiry" value="${d.billExpiry||""}"><span class="hint">Fills lines whose product has expiry.</span></div></div>`:"";
+ const pick=!n?bb+`<div class="toolbar">${pickerHTML("prodQ","Add a product: part number, alt part number, barcode or description")}<span class="hint" style="align-self:center">Scan or type. Enter adds an exact barcode match.</span></div>`:"";
  return `${pick}<div class="tw"><table class="grid-lines"><thead><tr><th>#</th>${head}</tr></thead><tbody>${L.length?L.map((l,i)=>`<tr><td class="faint">${i+1}</td>${row(l,i)}</tr>`).join(""):`<tr><td colspan="12"><div class="empty">${n?"":"No products yet. Search above, or scan a barcode."}</div></td></tr>`}</tbody></table></div>`}
 const difTxt=l=>l.listRate!=null&&l.rate!==""&&+l.rate!==+l.listRate?`Differs from list ${money(l.listRate)}`:"";
 const btText=l=>{const need=r2((+l.qty||0)+(+l.free||0));const got=r2((l.batches||[]).reduce((a,b)=>a+b.qty,0));return (l.batches||[]).map(b=>`Batch ${esc(b.batchNo)} × ${qtyf(b.qty)}${b.expiry?" (exp "+fd(b.expiry)+")":""}`).join(", ")+(got<need-0.0001?` <b style="color:var(--crit)">Only ${qtyf(got)} of ${qtyf(need)} in stock</b>`:"")};
@@ -1814,9 +1833,10 @@ function mountEditor(){const root=$("#ed");const d=ED.d;
    if(f==="siteId"&&d.kind!=="DC"){const s=client(d.clientId).sites.find(x=>x.id===v);d.shipState=s.state}
    if(f==="date"&&d.kind==="SI"&&d.invType==="Credit"&&d.clientId)d.due=addDays(v,client(d.clientId).creditDays);
    if(f==="date"&&d.kind==="QT")d.validTill=addDays(v,30);
+   if(f==="billBatch"||f==="billExpiry")d.lines.forEach((l,i)=>{const isB=f==="billBatch";if(isB?l.batchSet:(l.expirySet||!prod(l.pid).hasExpiry))return;const nv=isB?String(v).trim():v;l[isB?"batchNo":"expiry"]=nv;const inp=$(`[data-l="${i}"][data-k="${isB?"batchNo":"expiry"}"]`);if(inp)inp.value=nv;if(isB){const a=$(`[data-auto="${i}"]`);if(a)a.style.display=nv?"none":""}});
    if(f==="noteType")d.lines.forEach(l=>{const o=doc(d.srcId).lines[l.srcLine];l.rate=v==="Goods return"?o.rate:0});
    return el.hasAttribute("data-redraw")}
-  if(el.dataset.l!=null){const l=d.lines[+el.dataset.l];const k=el.dataset.k;l[k]=el.type==="checkbox"?el.checked:el.value;return ["discType","batchNo"].includes(k)&&d.kind!=="PE"?false:k==="rate"&&l.listRate!=null}
+  if(el.dataset.l!=null){const l=d.lines[+el.dataset.l];const k=el.dataset.k;l[k]=el.type==="checkbox"?el.checked:el.value;if(d.kind==="PE"&&k==="batchNo"){l.batchSet=String(l.batchNo).trim()!=="";const a=$(`[data-auto="${el.dataset.l}"]`);if(a)a.style.display=l.batchNo?"none":""}if(d.kind==="PE"&&k==="expiry")l.expirySet=!!l.expiry;return ["discType","batchNo"].includes(k)&&d.kind!=="PE"?false:k==="rate"&&l.listRate!=null}
   return false};
  root.addEventListener("input",e=>{const r=set(e.target);if(e.target.tagName!=="SELECT"&&e.target.type!=="checkbox"){edRefresh()}});
  root.addEventListener("change",e=>{if(e.target.tagName==="SELECT"||e.target.type==="checkbox"||e.target.type==="date"){const r=set(e.target);if(r)render();else edRefresh()}});
@@ -1827,7 +1847,7 @@ function mountEditor(){const root=$("#ed");const d=ED.d;
  const pr=$("#prodQ");if(pr)mountPicker(pr,prodItems(d.branch,true),it=>{const p=prod(it.id);const lr=["SI","QT"].includes(d.kind)?rateFor(p.id,d.clientId):d.kind==="PE"?(p.avg||p.rate):0;
   const l={pid:p.id,partNo:p.partNo,desc:p.desc,hsn:p.hsn,unit:p.unit,gst:p.gst,qty:d.kind==="AD"?-1:1,free:0,rate:lr,discType:"%",discVal:0};if(["SI","QT"].includes(d.kind))l.listRate=lr;
   if(["DC","AD"].includes(d.kind)){const b=fefo(p.id,d.branch)[0]||S.batches.find(x=>x.pid===p.id&&x.branch===d.branch);if(!b)return toast(`No batch of ${p.partNo} at this branch.`,true);l.batchNo=b.batchNo;l.expiry=b.expiry;l.rate=p.avg}
-  if(d.kind==="PE"){l.batchNo="";l.expiry=""}
+  if(d.kind==="PE"){l.batchNo=(d.billBatch||"").trim();l.expiry=p.hasExpiry?(d.billExpiry||""):""}
   d.lines.push(l);render();setTimeout(()=>{const q=$$(`[data-l="${d.lines.length-1}"][data-k="qty"]`)[0];q&&q.select()},40)});
  $("#edSave").onclick=()=>edSave(false)}
 ACTS.edParty=()=>{if(["SI","QT"].includes(ED.d.kind))ED.d.clientId="";else ED.d.vendorId="";render()};
@@ -1910,7 +1930,7 @@ function printSheet(d,o){if(typeof o==="string")o={mark:o};o=o||{};const br=bran
  const site=d.clientId&&d.siteId?sc.sites.find(s=>s.id===d.siteId):d.siteClient&&d.siteId?client(d.siteClient).sites.find(s=>s.id===d.siteId):null;
  const st=c=>c?`${esc(stateName(c))} (${c})`:"";
  const forClient=o.forClient!==false&&!/^Internal/.test(o.note||"");
- const showBatch=["DC","AD","PE","DN"].includes(k)||(["SI","CN","CDN"].includes(k)&&!forClient);
+ const showBatch=k!=="QT";/* batch and expiry print on every copy (NIKHIL, 4 Nov 2026) */
  const val=["SI","QT","CN","CDN","DN","PE"].includes(k)||transferInv;
  /* masthead */
  const head=`<header class="ps-head"><div class="ps-co"><div class="ps-name">${esc(S.company.name)}</div><div>${esc(br.name)} branch · ${esc(br.address)}</div><div>GSTIN <b>${br.gstin}</b> · State ${st(br.state)} · PAN ${S.company.pan}</div><div>${esc(br.phone)} · ${esc(S.company.email)}</div></div>
