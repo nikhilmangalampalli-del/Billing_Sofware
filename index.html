@@ -865,6 +865,14 @@ a.kpi,a.kpi:hover{text-decoration:none;color:inherit}a.kpi .label,a.kpi .foot{te
  .tabbar a,.tabbar button,.aside-acts .btn,.page-head .acts .btn.primary,.content>.back:first-child,.content>button.back{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
  .aside-acts{backdrop-filter:none;-webkit-backdrop-filter:none}
 }
+
+/* Same as the frontend (5 Nov 2026): the notice stays off editors, where it would cover Save; phone tap targets are at least 44 px; the page head's pills are a rule of their own */
+body.in-editor .toast.note{display:none}
+@media (max-width:600px){
+ .ftabs button,.tabs button,.btn,.input{min-height:44px;height:auto}
+ .icon-btn,.search-btn{min-width:44px;min-height:44px}
+ .page-head .acts .btn:not(.primary){min-height:38px}
+}
 </style></head>
 <body><div id="app"></div><div id="toasts" class="toasts" aria-live="polite"></div>
 <script>
@@ -1280,6 +1288,9 @@ function render(){
  render.anim=location.hash!==render.last;const keepTop=!render.anim&&$(".app")?$(".app").scrollTop:0;UI.sideOpen=UI.sideOpen&&location.hash===render.last;app().innerHTML=shell(out.title,out.body);histTitle(String(out.title||"").replace(/<[^>]+>/g,""));
  if(out.mount)out.mount();
  if(UI.railHover)$(".side")?.classList.add("hold");
+ document.body.classList.toggle("in-editor",ROUTE[0]==="edit");
+ if(ED&&!ED.focused&&innerWidth>600){ED.focused=true;setTimeout(()=>quietFocus($(`#main .panel :is(${LINE_FIELD})`)),30)}
+ if(SEND_FOCUS&&!ED){SEND_FOCUS=false;setTimeout(()=>{const b=$('.page-head [data-act="docSend"]');b&&b.focus()},60)}
  renderIdle();const h=location.hash;if(h!==render.last){render.last=h;window.scrollTo(0,0)}else if(keepTop){const sc=$(".app");if(sc)sc.scrollTop=keepTop}}
 /* Phone rows (design 3.4, 3 Nov 2026). Under 600 px every table row becomes a short card. Each cell gets a role from its
    column heading: title (party or name), id (number or code), amount (one money column), status, date, branch; the rest are
@@ -1356,7 +1367,30 @@ document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
  else if(e.key==="/"&&sess()&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();palette()}
  else if(e.key==="Escape"){if(POP)closePop();else if(PANELS.length)closePanel()}
  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"&&ED){e.preventDefault();const b=$("#edSave");b&&b.click()}
+ /* the rest of design.md 10, as built in the frontend (5 Nov 2026) */
+ else if((e.ctrlKey||e.metaKey)&&e.key==="Enter"&&ED){e.preventDefault();SEND_FOCUS=true;const b=$("#edSave");b&&b.click()}
+ else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="p"&&sess()&&!ED){const b=$('.page-head [data-act="docPrint"]');if(b){e.preventDefault();b.click()}}
+ else if(e.altKey&&e.code==="KeyN"&&sess()&&!ED&&ROUTE.length===1&&ROUTE[0]!=="home"){const b=$(".page-head .acts .btn.primary:not(:disabled)");if(b){e.preventDefault();b.click()}}
+ else if(e.altKey&&e.code==="KeyP"&&ED){const q=$("#prodQ");if(q){e.preventDefault();q.focus()}}
+ else if(e.key==="Enter"&&!e.defaultPrevented&&ED&&moveFromLastField(e.target))e.preventDefault();
  resetIdle()});
+let SEND_FOCUS=false;
+const LINE_FIELD='input:not([type="checkbox"]):not([type="hidden"]):not(:disabled),select:not(:disabled)';
+function quietFocus(el){if(!el)return;el.dataset.quiet="1";el.focus();delete el.dataset.quiet}
+/* Enter on a line's last field: the next line, or back to the product box */
+function moveFromLastField(t){const row=t.closest&&t.closest("table.grid-lines tbody tr");if(!row||!t.matches(LINE_FIELD))return false;const fs=[...row.querySelectorAll(LINE_FIELD)];if(fs[fs.length-1]!==t)return false;
+ for(let n=row.nextElementSibling;n;n=n.nextElementSibling){const f=n.querySelector(LINE_FIELD);if(f){f.focus();f.select&&f.select();return true}}
+ const q=$("#prodQ");if(q){quietFocus(q);return true}return false}
+/* What changed in the real frontend, so it can be tried here (branch claude/ux-principles, 5 Nov 2026) */
+const CHANGES=[["Keyboard shortcuts","Alt+N starts a new document from its list. Alt+P jumps to the product box. Ctrl+Enter saves and lands on Send. Ctrl+P prints, asking whether it's for the client first.","edit/SI","Open a new invoice"],
+ ["The cursor moves for you","An editor opens on its first field. Picking a client moves to the product box. Enter on a line's last field goes to the next line, then back to the product box.","edit/SI","Try it on an invoice"],
+ ["Barcode scans","A scan adds the product it found, never one from the older list on screen. The box empties and keeps the cursor, ready for the next scan.","edit/PE","Try it on a purchase"],
+ ["Unsaved forms","Every document editor keeps your form every 30 seconds while it changes. A successful save removes it. If you sign out, the Dashboard offers it back.","edit/SI","Open an editor"],
+ ["Unfinished work notice","It no longer sits over the Save button on an editor. It still shows everywhere else until you answer it.","edit/SI","Open an editor"],
+ ["Phone tap sizes","Under 600 px, tabs, boxes, buttons and icons are at least 44 px high. Narrow this window to see it. The page head's 38 px pills stay, as the design sets them.","products","Open a list"]];
+ACTS.whatsNew=()=>openPanel({title:"What changed in the frontend",ctx:"5 Nov 2026. Not merged into the app yet.",width:"narrow",body:CHANGES.map(([t,x,h,l])=>`<div style="margin-bottom:16px"><b>${t}</b><p class="hint" style="margin:4px 0 8px">${x}</p><button class="btn sm" data-act="wnGo" data-h="${h}">${l}</button></div>`).join(""),foot:`<button class="btn" data-act="pclose">Close</button>`});
+ACTS.wnGo=a=>{closePanel();go(a.dataset.h)};
+ACTS.wnHide=()=>{UI.wnHidden=true;render()};
 document.addEventListener("click",e=>{const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
  if(act==="pclose")closePanel();else if(act==="pback")closePanel();else if(act==="palette")palette();else if(act==="logout")logout("Logout");
  else if(ACTS[act])ACTS[act](a,e)});
@@ -1400,6 +1434,8 @@ function notifyDrafts(){$$(".toast.note").forEach(t=>t.remove());const ds=S.draf
  t.innerHTML=`${ic("info")}<div class="grow"><b>Unfinished work</b><span class="sub">${ds.length===1?"You left this form before saving it.":`You left ${ds.length} forms before saving them.`}</span>${ds.slice(0,3).map(d=>`<div class="note-row"><span>${esc(d.label)}</span><button class="btn sm primary" data-act="draftOpen" data-k="${d.key}">Continue</button></div>`).join("")}</div><button class="icon-btn" data-act="noteClose" aria-label="Later">${ic("x")}</button>`;
  document.body.append(t)}
 ACTS.noteClose=a=>a.closest(".toast")?.remove();
+/* Every 30 seconds while the form changes (design.md 6.5); a successful save removes it */
+let LAST_AUTOSAVE="";setInterval(()=>{if(!ED||!sess())return;const t=JSON.stringify(ED.d);if(t===LAST_AUTOSAVE)return;if(!((ED.d.lines||[]).length||ED.d.clientId||ED.d.vendorId||+ED.d.amount))return;LAST_AUTOSAVE=t;saveDraft()},30000);
 function saveDraft(){if(!ED)return;const label=`${KIND[ED.d.kind].name}${ED.d.clientId?" · "+client(ED.d.clientId).name:ED.d.vendorId?" · "+vendor(ED.d.vendorId).name:""}`;S.drafts=S.drafts.filter(x=>!(x.key===ED.key&&x.login===sess().des+sess().branch));S.drafts.push({key:ED.key,login:sess().des+sess().branch,machine:sess().machine,label,at:NOW(),data:clone(ED.d),mode:ED.mode,editId:ED.editId})}
 let WIDE=innerWidth>960;addEventListener("resize",()=>{const w=innerWidth>960;if(w!==WIDE){WIDE=w;const a=document.querySelector(".app");a&&a.classList.toggle("mini",w)}});
 
@@ -1465,6 +1501,7 @@ SCREENS.home=()=>{const br=sess().branch;const [from,to,pf,pt,label]=HOME_P==="l
   ...S.messages.filter(m=>m.status==="Failed"&&inBr(m.branch)).map(m=>`<div class="list-item click" data-href="messages"><span class="chip crit plain">Message failed</span><div class="grow"><div class="title">${esc(m.to)}</div><span class="sub-line">${esc(m.channel)} · ${esc(m.purpose||"")}</span></div></div>`)];
  const kpi=(l,icon,tone,v,foot,href)=>`<a class="panel kpi click" href="#/${href}"><div class="kpi-top"><span class="label">${l}</span><span class="kpi-ic ${tone}">${ic(icon)}</span></div><span class="value">${v}</span><span class="foot">${foot}</span></a>`;
  const body=`<div class="page-head"><div><h1>Good to see you, ${esc(sess().des)}</h1><p>${allView()?"All branches":esc(branch(br).name)} · ${fd(TODAY)} · Financial year ${sess().fy}</p></div><div class="acts"><div class="seg" role="group" aria-label="Period">${[["month","This month"],["last","Last month"],["year","This year"],["custom","Custom"]].map(([k,l])=>`<button class="${HOME_P===k?"on":""}" data-act="homeP" data-p="${k}" aria-pressed="${HOME_P===k}">${l}</button>`).join("")}</div></div></div>
+ ${UI.wnHidden?"":`<div class="callout info">${ic("info")}<div style="flex:1"><b>The frontend changed on 5 Nov 2026.</b> See what's different and try each change here. <button class="btn sm" data-act="whatsNew">See what changed</button> <button class="btn sm ghost" data-act="wnHide">Hide</button></div></div>`}
  ${drafts.length?`<div class="callout info">${ic("info")}<div><b>Unsaved work from your last session</b>${drafts.map(d=>`<div style="margin-top:6px">${esc(d.label)} · ${fdt(d.at).replace('<span class="sub">',' ').replace("</span>","")} <button class="btn sm" data-act="draftOpen" data-k="${d.key}">Open</button> <button class="btn sm ghost" data-act="draftDiscard" data-k="${d.key}">Discard</button></div>`).join("")}</div></div>`:""}
  <div class="kpis">
  ${kpi(`Sales · ${label}`,"doc","",kmoney(sNow),`${invP.length} invoice${invP.length===1?"":"s"}${chg!==null?` · <span class="chip plain ${chg>=0?"good":"crit"}">${chg>=0?"▲":"▼"} ${Math.abs(chg)}%</span> vs previous`:""}`,"report/sales")}
@@ -1715,11 +1752,12 @@ SCREENS.payments=()=>{const rows=myDocs("PY");
 
 /* ---------- generic picker (products, clients, vendors) ---------- */
 const pickerHTML=(id,ph,v="")=>`<div class="picker"><input id="${id}" class="input" placeholder="${ph}" autocomplete="off" value="${esc(v)}" role="combobox" aria-expanded="false" aria-autocomplete="list"><div class="pick-list" role="listbox" hidden></div></div>`;
+let SCANNED=false; /* a scanner types the whole code and Enter in a blink */
 function mountPicker(inp,items,onPick){const box=inp.nextElementSibling;let list=[],on=0;
  const draw=()=>{list=items(inp.value.trim().toLowerCase());on=0;if(!list.length){box.innerHTML=`<div class="faint">No match</div>`}else box.innerHTML=list.map((x,i)=>`<div role="option" data-i="${i}" class="${i===on?"on":""}">${x.label}${x.sub?`<small>${x.sub}</small>`:""}</div>`).join("");box.hidden=false;inp.setAttribute("aria-expanded","true")};
  const hide=()=>{box.hidden=true;inp.setAttribute("aria-expanded","false")};
- inp.addEventListener("input",draw);inp.addEventListener("focus",draw);inp.addEventListener("blur",()=>setTimeout(hide,150));
- inp.addEventListener("keydown",e=>{if(box.hidden)return;if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();on=(on+(e.key==="ArrowDown"?1:-1)+list.length)%list.length;$$("[data-i]",box).forEach((x,i)=>x.classList.toggle("on",i===on))}if(e.key==="Enter"&&list[on]){e.preventDefault();hide();onPick(list[on])}if(e.key==="Escape"){e.stopPropagation();hide()}});
+ let typedAt=0;inp.addEventListener("input",()=>{if(inp.value.length<=1)typedAt=Date.now();draw()});inp.addEventListener("focus",()=>{if(!inp.dataset.quiet)draw()});inp.addEventListener("blur",()=>setTimeout(hide,150));
+ inp.addEventListener("keydown",e=>{if(box.hidden)return;if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();on=(on+(e.key==="ArrowDown"?1:-1)+list.length)%list.length;$$("[data-i]",box).forEach((x,i)=>x.classList.toggle("on",i===on))}if(e.key==="Enter"&&list[on]){e.preventDefault();hide();SCANNED=inp.value.length>=4&&Date.now()-typedAt<300;onPick(list[on])}if(e.key==="Escape"){e.stopPropagation();hide()}});
  box.addEventListener("mousedown",e=>{const r=e.target.closest("[data-i]");if(r){e.preventDefault();hide();onPick(list[+r.dataset.i])}})}
 const prodItems=(br,stock=true)=>q=>S.products.filter(p=>p.status==="Active"&&(!q||(p.partNo+" "+p.alt+" "+p.desc+" "+(S.barcodes[p.id]||[]).join(" ")).toLowerCase().includes(q))).slice(0,8).map(p=>({id:p.id,label:`<span class="mono">${p.partNo}</span> · ${esc(p.desc)}`,sub:`Alt ${p.alt} · ${p.unit} · GST ${p.gst}%${stock?` · ${qtyf(stockAt(p.id,br))} in stock here`:""}`}));
 const rateFor=(pid,cid)=>{const c=cid&&client(cid);const pl=c&&c.priceList&&S.priceLists.find(l=>l.id===c.priceList&&l.status==="Active");return pl&&pl.rates[pid]!=null?+pl.rates[pid]:prod(pid).rate};
@@ -1792,7 +1830,7 @@ function linesBlock(d){const k=d.kind;const L=d.lines;const n=isNote(k);
  else{const pe=k==="PE",si=k==="SI";head=`<th>Product</th>${pe?"<th>Batch</th><th>Expiry</th>":""}<th class="num">Qty</th>${pe||si?'<th class="num">Free</th>':""}<th class="num">Rate</th><th class="num">Disc</th><th class="num">GST</th><th class="num">Amount</th><th></th>`;
   row=(l,i)=>`<td><span class="mono">${esc(l.partNo)}</span><span class="sub">${esc(l.desc)} · HSN ${l.hsn}</span>${si?`<span class="sub" data-bt="${i}">${btText(l)}</span>`:""}</td>${pe?`<td><input class="input w90" data-l="${i}" data-k="batchNo" value="${esc(l.batchNo||"")}" placeholder="${prod(l.pid).hasExpiry?"Required":"Auto"}" aria-label="Batch">${!prod(l.pid).hasExpiry?'<span class="sub" data-auto="'+i+'"'+(l.batchNo?' style="display:none"':'')+'>Purchase no. on save</span>':""}</td><td>${prod(l.pid).hasExpiry?`<input type="date" class="input w120" data-l="${i}" data-k="expiry" value="${l.expiry||""}" aria-label="Expiry">`:'<span class="faint">No expiry</span>'}</td>`:""}<td class="num"><input class="input w60 num" data-l="${i}" data-k="qty" value="${l.qty}" aria-label="Quantity"></td>${pe||si?`<td class="num"><input class="input w60 num" data-l="${i}" data-k="free" value="${l.free||0}" aria-label="Free quantity"></td>`:""}<td class="num"><input class="input w90 num" data-l="${i}" data-k="rate" value="${l.rate}" aria-label="Rate">${!pe?`<span class="sub" style="color:var(--warn)" data-dl="${i}">${difTxt(l)}</span>`:""}</td><td class="num"><input class="input w60 num" data-l="${i}" data-k="discVal" value="${l.discVal||0}" aria-label="Discount"><select class="input" data-l="${i}" data-k="discType" aria-label="Discount type" style="width:46px">${["%","₹"].map(x=>`<option ${l.discType===x?"selected":""}>${x}</option>`).join("")}</select></td><td class="num">${l.gst}%</td><td class="num" data-amt="${i}">${money(l.amount||0)}</td><td><button class="icon-btn" data-act="edDel" data-i="${i}" aria-label="Remove line">${ic("x")}</button></td>`}
  const bb=k==="PE"&&!n?`<div class="grid g2 bill-batch" style="padding:12px 16px 0"><div class="field"><label for="f_billBatch">Batch for this bill</label><input id="f_billBatch" class="input mono" data-f="billBatch" placeholder="As printed on the box" value="${esc(d.billBatch||"")}"><span class="hint">Fills every line you add. Type on a line to change just that one. Left empty, items without expiry get this purchase's number as their batch.</span></div><div class="field"><label for="f_billExpiry">Expiry for this bill</label><input id="f_billExpiry" type="date" class="input" data-f="billExpiry" value="${d.billExpiry||""}"><span class="hint">Fills lines whose product has expiry.</span></div></div>`:"";
- const pick=!n?bb+`<div class="toolbar">${pickerHTML("prodQ","Add a product: part number, alt part number, barcode or description")}<span class="hint" style="align-self:center">Scan or type. Enter adds an exact barcode match.</span></div>`:"";
+ const pick=!n?bb+`<div class="toolbar">${pickerHTML("prodQ","Add a product: part number, barcode or description (Alt+P)")}<span class="hint" style="align-self:center">Scan or type. Enter adds an exact barcode match.</span></div>`:"";
  return `${pick}<div class="tw"><table class="grid-lines"><thead><tr><th>#</th>${head}</tr></thead><tbody>${L.length?L.map((l,i)=>`<tr><td class="faint">${i+1}</td>${row(l,i)}</tr>`).join(""):`<tr><td colspan="12"><div class="empty">${n?"":"No products yet. Search above, or scan a barcode."}</div></td></tr>`}</tbody></table></div>`}
 const difTxt=l=>l.listRate!=null&&l.rate!==""&&+l.rate!==+l.listRate?`Differs from list ${money(l.listRate)}`:"";
 const btText=l=>{const need=r2((+l.qty||0)+(+l.free||0));const got=r2((l.batches||[]).reduce((a,b)=>a+b.qty,0));return (l.batches||[]).map(b=>`Batch ${esc(b.batchNo)} × ${qtyf(b.qty)}${b.expiry?" (exp "+fd(b.expiry)+")":""}`).join(", ")+(got<need-0.0001?` <b style="color:var(--crit)">Only ${qtyf(got)} of ${qtyf(need)} in stock</b>`:"")};
@@ -1842,18 +1880,20 @@ function mountEditor(){const root=$("#ed");const d=ED.d;
  root.addEventListener("change",e=>{if(e.target.tagName==="SELECT"||e.target.type==="checkbox"||e.target.type==="date"){const r=set(e.target);if(r)render();else edRefresh()}});
  const pq=$("#ptyQ");if(pq){const isC=["SI","QT"].includes(d.kind);
   mountPicker(pq,q=>{const src=isC?myClients():myVendors();const r=src.filter(p=>p.status==="Active"&&(!q||(p.code+p.name+p.gstin+(p.mobile||"")).toLowerCase().includes(q))).slice(0,8).map(p=>({id:p.id,label:esc(p.name),sub:`${p.code} · ${p.gstin||"Unregistered"} · ${stateName(p.state)}`}));r.push({id:"__new",label:`${ic("plus")} New ${isC?"client":"vendor"}`,sub:"Opens a side panel; you come back here."});return r},
-   it=>{const pickP=p=>{if(isC){d.clientId=p.id;const s=p.sites.find(x=>x.isDefault)||p.sites[0];d.siteId=s.id;d.shipState=s.state;d.priceList=p.priceList;d.fe=p.fe;if(d.kind==="SI"&&d.invType==="Credit")d.due=addDays(d.date,p.creditDays);d.lines.forEach(l=>{l.listRate=rateFor(l.pid,p.id);l.rate=l.listRate})}else d.vendorId=p.id;render()};
+   it=>{const pickP=p=>{if(isC){d.clientId=p.id;const s=p.sites.find(x=>x.isDefault)||p.sites[0];d.siteId=s.id;d.shipState=s.state;d.priceList=p.priceList;d.fe=p.fe;if(d.kind==="SI"&&d.invType==="Credit")d.due=addDays(d.date,p.creditDays);d.lines.forEach(l=>{l.listRate=rateFor(l.pid,p.id);l.rate=l.listRate})}else d.vendorId=p.id;render();if(isC&&innerWidth>600)setTimeout(()=>quietFocus($("#prodQ")),30)};
     if(it.id==="__new")(isC?clientPanel:vendorPanel)(null,pickP);else pickP(isC?client(it.id):vendor(it.id))})}
  const pr=$("#prodQ");if(pr)mountPicker(pr,prodItems(d.branch,true),it=>{const p=prod(it.id);const lr=["SI","QT"].includes(d.kind)?rateFor(p.id,d.clientId):d.kind==="PE"?(p.avg||p.rate):0;
   const l={pid:p.id,partNo:p.partNo,desc:p.desc,hsn:p.hsn,unit:p.unit,gst:p.gst,qty:d.kind==="AD"?-1:1,free:0,rate:lr,discType:"%",discVal:0};if(["SI","QT"].includes(d.kind))l.listRate=lr;
   if(["DC","AD"].includes(d.kind)){const b=fefo(p.id,d.branch)[0]||S.batches.find(x=>x.pid===p.id&&x.branch===d.branch);if(!b)return toast(`No batch of ${p.partNo} at this branch.`,true);l.batchNo=b.batchNo;l.expiry=b.expiry;l.rate=p.avg}
   if(d.kind==="PE"){l.batchNo=(d.billBatch||"").trim();l.expiry=p.hasExpiry?(d.billExpiry||""):""}
-  d.lines.push(l);render();setTimeout(()=>{const q=$$(`[data-l="${d.lines.length-1}"][data-k="qty"]`)[0];q&&q.select()},40)});
+  d.lines.push(l);render();setTimeout(()=>{if(SCANNED){SCANNED=false;quietFocus($("#prodQ"));return}const q=$$(`[data-l="${d.lines.length-1}"][data-k="qty"]`)[0];q&&q.select()},40)});
+ if(pr)pr.setAttribute("aria-label","Add a product");
  $("#edSave").onclick=()=>edSave(false)}
 ACTS.edParty=()=>{if(["SI","QT"].includes(ED.d.kind))ED.d.clientId="";else ED.d.vendorId="";render()};
 ACTS.edDel=a=>{ED.d.lines.splice(+a.dataset.i,1);render()};
 ACTS.edInv=a=>{const d=ED.d;d.invType=a.dataset.v;d.due=d.invType==="Credit"&&d.clientId?addDays(d.date,client(d.clientId).creditDays):"";render()};
 ACTS.edDraft=()=>edSave(true);
+{const inner=edSave;edSave=function(...a){const key=ED&&ED.key;const r=inner.apply(this,a);if(key&&!ED)S.drafts=S.drafts.filter(x=>x.key!==key);return r}}
 function edErr(m){const e=$("#edErr");e.textContent=m;e.hidden=false;e.scrollIntoView({block:"center"})}
 function edSave(asDraft){const d=clone(ED.d);const k=d.kind;
  if(d.lines){d.lines=d.lines.filter(l=>l.pid);d.lines.forEach(l=>["qty","free","rate","discVal"].forEach(x=>{if(l[x]!=null&&l[x]!=="")l[x]=+l[x]||0}))}
