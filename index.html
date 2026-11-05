@@ -1309,24 +1309,25 @@ function tableRoles(t){if(t.dataset.roles||t.closest(".rep-out,.tv,.sheet,.chart
  if(!used.title){const i=used.id?role.indexOf("id"):role.indexOf("x");if(i>=0)role[i]="title"}
  t.classList.add("cardable");t.dataset.roles="1";
  t.querySelectorAll("tbody tr").forEach(tr=>{if(tr.children.length!==hs.length)return tr.classList.add("whole");[...tr.children].forEach((td,i)=>{td.dataset.role=role[i];if(!td.dataset.label)td.dataset.label=hs[i];if(/^[–—-]?$/.test(td.textContent.trim())&&!td.querySelector("input,select,button,textarea"))td.dataset.empty="1"})})}
+/* Pager and Filters button are rewritten only when their html changes (5 Nov 2026): reading innerHTML back never matched, so they were rewritten every frame and froze iPhones. */
 /* Paging (design 4, 3 Nov 2026): any table with more rows than fit one page shows 25 at a time (reports 50), with
    "21–40 of 132 · page 2 of 6" and Previous / Next under it. Document and editor lines are never paged. A change in
    the row count (search, tab, filter) goes back to page 1. */
 function pageTable(t){if(t.closest(".editor,.sheet,.tv,.chart,.sp .grid-lines")||t.classList.contains("grid-lines"))return;const tb=t.tBodies[0];if(!tb)return;
  const rows=[...tb.rows].filter(r=>!r.classList.contains("whole")||r.cells.length>1),size=t.closest(".rep-out")?50:25,n=rows.length;
  const host=t.closest(".table-wrap,.tw")||t;let pg=host.nextElementSibling?.classList.contains("pager")?host.nextElementSibling:null;
- if(n<=size){rows.forEach(r=>r.hidden=false);pg&&pg.remove();delete t.dataset.pg;return}
+ if(n<=size){rows.forEach(r=>{if(r.hidden)r.hidden=false});pg&&pg.remove();delete t.dataset.pg;return}
  if(t.dataset.n!==String(n)){t.dataset.n=String(n);t.dataset.pg="1"}
- const pages=Math.ceil(n/size),p=Math.min(+t.dataset.pg||1,pages);rows.forEach((r,i)=>r.hidden=!(i>=(p-1)*size&&i<p*size));
+ const pages=Math.ceil(n/size),p=Math.min(+t.dataset.pg||1,pages);rows.forEach((r,i)=>{const h=!(i>=(p-1)*size&&i<p*size);if(r.hidden!==h)r.hidden=h});
  if(!pg){pg=document.createElement("nav");pg.className="pager";pg.setAttribute("aria-label","Pages");host.after(pg)}
  const html=`<span>${(p-1)*size+1}–${Math.min(n,p*size)} of ${n}<span class="pager-pg"> · page ${p} of ${pages}</span></span><div class="acts"><button class="btn sm" data-pg="-1" ${p<=1?"disabled":""}>${ic("back")}Previous</button><button class="btn sm" data-pg="1" ${p>=pages?"disabled":""}>Next</button></div>`;
- if(pg.innerHTML!==html)pg.innerHTML=html;
+ if(pg._h!==html){pg._h=html;pg.innerHTML=html}
  pg.onclick=e=>{const b=e.target.closest("[data-pg]");if(!b||b.disabled)return;t.dataset.pg=String(p+ +b.dataset.pg);pageTable(t);(t.closest(".panel")||host).scrollIntoView({block:"start",behavior:"smooth"})}}
 /* Phone filters (design 3.4): a list's filters fold behind one Filters button that shows how many are set. */
 function foldFilters(tb){const fs=[...tb.querySelectorAll(":scope > .field:not(.grow)")];if(!fs.length)return;let b=tb.querySelector(":scope > .flt-btn");
  const set=fs.filter(f=>{const x=f.querySelector("select,input");return x&&x.value&&x.value!=="all"}).length;
  if(!b){b=document.createElement("button");b.type="button";b.className="btn flt-btn";b.onclick=()=>{tb.classList.toggle("show-flt");foldFilters(tb)};tb.querySelector(":scope > .field.grow")?.after(b)||tb.prepend(b);tb.addEventListener("change",()=>foldFilters(tb))}
- const html=`${ic("adjust")}Filters${set?` <b>${set}</b>`:""}`;if(b.innerHTML!==html)b.innerHTML=html;b.setAttribute("aria-expanded",tb.classList.contains("show-flt"))}
+ const html=`${ic("adjust")}Filters${set?` <b>${set}</b>`:""}`;if(b._h!==html){b._h=html;b.innerHTML=html}const ex=String(tb.classList.contains("show-flt"));if(b.getAttribute("aria-expanded")!==ex)b.setAttribute("aria-expanded",ex)}
 function mobilize(){$$("table").forEach(t=>{if(!(t.dataset.roles&&t.dataset.rows===String(t.tBodies[0]?.rows.length))){delete t.dataset.roles;t.dataset.rows=String(t.tBodies[0]?.rows.length);tableRoles(t)}pageTable(t)});$$(".toolbar").forEach(foldFilters)}
 new MutationObserver(()=>{cancelAnimationFrame(mobilize.f);mobilize.f=requestAnimationFrame(mobilize)}).observe(document.body,{childList:true,subtree:true});
 /* side panels (LG-6): open only on a click, stack two deep */
