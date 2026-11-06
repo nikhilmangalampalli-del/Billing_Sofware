@@ -875,6 +875,37 @@ body.in-editor .toast.note{display:none}
  .icon-btn,.search-btn{min-width:44px;min-height:44px}
  .page-head .acts .btn:not(.primary){min-height:38px}
 }
+
+/* Printing a list (Print on Client Master, Product Master and every other list; NIKHIL, 6 Nov 2026: "fix the print output").
+   The page prints as a plain report: heading, summary numbers and the whole table. Every row prints, not only the
+   page on screen; every column fits the paper (no cut-off at the right edge); the header row repeats on each page;
+   text is dark enough to read on paper; tabs, search, filters, paging, buttons and screen-only notes are left out. */
+@media print{
+ html,body,#app,#root,.app,.main,.content{height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important}
+ body{color:#000!important}
+ .tabbar,.side,.side-scrim,.top,.strip,.toasts,.toast.note,.draft-notice,.page-head .acts,.page-head .actions,.content>.back,.ftabs,.toolbar,.pager,.flt-btn,.tnote{display:none!important}
+ .app,.app.mini{display:block!important}
+ .content{padding:0!important;max-width:none!important;gap:10px}
+ .content>*,.content.enter>*{animation:none!important}
+ .page-head{margin-bottom:8px!important}.page-head h1{font-size:18px!important}.page-head p{display:block!important;font-size:11px;color:#333!important}
+ .stats{display:flex!important;flex-wrap:wrap;gap:8px!important;margin:0 0 10px!important;overflow:visible!important}
+ .stat{flex:1 1 0!important;min-width:0;padding:6px 10px!important;box-shadow:none!important;border-color:#bbb!important}
+ .stat .v{font-size:14px!important}.stat .h,.stat .l,.stat .k{color:#333!important}
+ .panel{border:0!important;box-shadow:none!important;background:none!important}
+ .tw,.table-wrap{overflow:visible!important}
+ table{width:100%!important;font-size:10px;border-collapse:collapse}
+ thead{display:table-header-group}tfoot{display:table-footer-group}
+ tbody tr[hidden]{display:table-row!important}
+ tr{break-inside:avoid}
+ th,td{padding:4px 5px!important;white-space:normal!important;color:#000!important;background:none!important;border-bottom:1px solid #ccc!important;position:static!important}
+ th{font-size:8.5px!important;color:#333!important;border-bottom:1px solid #666!important}
+ td.mono,td .mono{white-space:nowrap!important;font-size:9.5px!important}
+ .cell-party{min-width:0!important;max-width:none!important}
+ td .sub,td .sub-line{font-size:8.5px!important;line-height:1.3}
+ td .sub,td .sub-line,.faint,.muted{color:#444!important}
+ tr.muted td{color:#555!important}
+ .chip{background:none!important;color:#000!important;padding:0!important;height:auto!important;font-size:inherit!important;font-weight:400!important}.chip::before{display:none!important}
+}
 </style></head>
 <body><div id="app"></div><div id="toasts" class="toasts" aria-live="polite"></div>
 <script>
@@ -1602,7 +1633,7 @@ SCREENS.clients=()=>{const rows=myClients();
   stats:[["Active clients",rows.filter(c=>c.status==="Active").length,rows.filter(c=>c.status!=="Active").length+" inactive"],["Clients with dues",rows.filter(c=>clientDue(c.id)>0).length,kmoney(rows.reduce((a,c)=>a+Math.max(0,clientDue(c.id)),0))+" in all"],["Unregistered (no GSTIN)",rows.filter(c=>!c.gstin).length,"Billed as B2C"]],
   tabs:[["all","All",()=>true],["dues","Has dues",c=>clientDue(c.id)>0],["inactive","Inactive",c=>c.status!=="Active"]],
   rows,text:c=>c.code+c.name+c.gstin+c.mobile+c.group+c.category,searchPh:"Search code, name, GSTIN, mobile, group",
-  cols:[["Code",c=>`<span class="mono">${c.code}</span>`],["Name",c=>esc(c.name)+`<span class="sub">${esc([c.group,c.category].filter(Boolean).join(" · "))}</span>`],["Address",c=>esc(c.address)],["Mobile",c=>c.mobile],["Land line",c=>c.landline||dash],["GSTIN",c=>c.gstin?`<span class="mono">${c.gstin}</span>`:dash],["State",c=>stateName(c.state)],["Status",c=>stChip(c.status)],["Location",c=>esc(c.location)],["Balance",c=>money(clientDue(c.id)),"num"]],
+  cols:[["Code",c=>`<span class="mono">${c.code}</span>`],["Name",c=>esc(c.name)+`<span class="sub">${esc([c.group,c.category].filter(Boolean).join(" · "))}</span>`],["Address",c=>esc(c.address)],["Mobile",c=>c.mobile],["GSTIN",c=>c.gstin?`<span class="mono">${c.gstin}</span>`:dash],["State",c=>stateName(c.state)],["Status",c=>stChip(c.status)],["Location",c=>esc(c.location)],["Balance",c=>money(clientDue(c.id)),"num"]],
   href:c=>"client/"+c.id,muted:c=>c.status!=="Active",note:"Send SMS comes after v1 (MS-4)."})};
 ACTS.clientsExport=()=>toast("Excel export is made on the server and matches this list (RP-3).");ACTS.clientsPrint=()=>window.print();
 const stateSel=(id,v)=>`<select id="${id}" class="input">${STATES.map(s=>`<option value="${s[0]}" ${s[0]===v?"selected":""}>${s[1]} (${s[0]})</option>`).join("")}</select>`;
@@ -1668,7 +1699,7 @@ SCREENS.vendors=()=>{const rows=myVendors();
   actions:`<button class="btn primary" data-act="vendorNew" ${canWrite()?"":"disabled"}>${ic("plus")}Register vendor</button>`,
   filters:[["st","Status",["Active","Inactive"],v=>v.status]],
   stats:[["Active vendors",rows.filter(v=>v.status==="Active").length,""],["Owed to vendors",kmoney(rows.reduce((a,v)=>a+Math.max(0,vendorDue(v.id)),0)),rows.filter(v=>vendorDue(v.id)>0).length+" vendors"]],
-  rows,text:v=>v.code+v.name+v.gstin+v.mobile,cols:[["Code",v=>`<span class="mono">${v.code}</span>`],["Name",v=>esc(v.name)+(v.contact?`<span class="sub">${esc(v.contact)}</span>`:"")],["GSTIN",v=>v.gstin?`<span class="mono">${v.gstin}</span>`:dash],["State",v=>stateName(v.state)],["Contact",v=>esc(v.contact||"–")],["Mobile",v=>v.mobile],["Land line",v=>v.landline||dash],["Location",v=>esc(v.location)],["Balance owed",v=>money(vendorDue(v.id)),"num"],["Status",v=>stChip(v.status)]],href:v=>"vendor/"+v.id,muted:v=>v.status!=="Active"})};
+  rows,text:v=>v.code+v.name+v.gstin+v.mobile,cols:[["Code",v=>`<span class="mono">${v.code}</span>`],["Name",v=>esc(v.name)+(v.contact?`<span class="sub">${esc(v.contact)}</span>`:"")],["GSTIN",v=>v.gstin?`<span class="mono">${v.gstin}</span>`:dash],["State",v=>stateName(v.state)],["Contact",v=>esc(v.contact||"–")],["Mobile",v=>v.mobile],["Location",v=>esc(v.location)],["Balance owed",v=>money(vendorDue(v.id)),"num"],["Status",v=>stChip(v.status)]],href:v=>"vendor/"+v.id,muted:v=>v.status!=="Active"})};
 function vendorPanel(v,back){const n=!v;v=v?clone(v):{code:"VN-0"+(S.vendors.length+101),name:"",gstin:"",state:branch(sess().branch).state,contact:"",mobile:"",landline:"",email:"",address:"",pin:"",shipAddress:"",location:"",bank:"",acct:"",ifsc:"",status:"Active"};
  const f=(id,l,k,o="")=>`<div class="field ${o}"><label for="${id}">${l}</label><input id="${id}" class="input" value="${esc(v[k])}"></div>`;
  openPanel({title:n?"New vendor":"Edit vendor",ctx:n?`Belongs to ${esc(branch(sess().branch).name)} only`:esc(v.code),body:`<div class="grid g2">${f("vNm",'Name <span class="req">*</span>',"name")}<div class="field"><label>Code</label><input class="input mono" value="${v.code}" readonly></div>${f("vGs","GSTIN","gstin")}<div class="field"><label for="vSt">State</label>${stateSel("vSt",v.state)}</div>${f("vCp","Contact person","contact")}${f("vMb","Mobile","mobile")}${f("vLl","Land line","landline")}${f("vEm","Email","email")}${f("vAd","Billing address","address","span2")}${f("vPn","PIN","pin")}${f("vLo","Location","location")}${f("vSh","Shipping address","shipAddress","span2")}${f("vBk","Bank name","bank")}${f("vAc","Account number","acct")}${f("vIf","IFSC","ifsc")}<label class="check"><input type="checkbox" id="vAct" ${v.status==="Active"?"checked":""}> Active</label></div><p class="hint">The opening balance is entered once in Settings → Opening balances.</p>`,
